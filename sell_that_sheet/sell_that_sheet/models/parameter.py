@@ -10,6 +10,6 @@ class Parameter(models.Model):
 
 class AuctionParameter(models.Model):
     parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE, verbose_name="Associated Parameter")
-    valueName = models.CharField(max_length=255, verbose_name="Parameter Value name")
-    valueId = models.CharField(max_length=35, verbose_name="Parameter Value id")
+    value_name = models.CharField(max_length=255, verbose_name="Parameter Value name")
+    value_id = models.CharField(max_length=35, verbose_name="Parameter Value id")
     auction = models.ForeignKey(Auction, on_delete=models.CASCADE, verbose_name="Associated Auction")
