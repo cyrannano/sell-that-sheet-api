@@ -11,6 +11,7 @@ class Auction(models.Model):
     photoset = models.ForeignKey(PhotoSet, on_delete=models.CASCADE)
     shipment_price = models.IntegerField(null=True)
     description = models.TextField(null=True)
+    category = models.CharField(max_length=15, null=True)
 
     def __str__(self):
         return self.name

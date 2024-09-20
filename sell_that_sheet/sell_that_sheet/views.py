@@ -127,12 +127,20 @@ class AllegroCallbackView(APIView):
             {"message": "Token fetched successfully"}, status=status.HTTP_200_OK
         )
 
+def check_new_parameters(parameters):
+    for parameter in parameters:
+        try:
+            Parameter.objects.get(allegro_id=parameter["id"])
+        except Parameter.DoesNotExist:
+            Parameter.objects.create(allegro_id=parameter["id"], name=parameter["name"], type=parameter["type"])
 
 class AllegroGetCategoryParametersView(APIView):
     def get(self, request, categoryId):
         connector = AllegroConnector()
         url = f"https://api.allegro.pl/sale/categories/{categoryId}/parameters"
         response = connector.make_authenticated_get_request(request, url)
+        # async check if response parameters are already in the database and if not, save them
+        check_new_parameters(response['parameters'])
         return Response(response)
 
 

@@ -7,7 +7,7 @@ def get_thumbnail_url(path, base_path):
     # return url to thumbnail of the image
     # replace double backslashes with single backslashes
     # replace backslashes with forward slashes
-    url = "http://172.27.70.154/images/"
+    url = "http://172.27.70.154/thumbnails/"
     path = path.replace(base_path, '').replace("\\\\", '/').replace("\\", '/')
     return f"{url}{path}"
 
