@@ -188,3 +188,104 @@ class GetModelStructure(APIView):
 
         except LookupError:
             return JsonResponse({"error": "Model not found"}, status=404)
+
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+from openpyxl import Workbook
+from io import BytesIO
+
+from .models import AuctionSet, Auction, AuctionParameter, Parameter
+
+def download_auctionset_xlsx(request, auctionset_id):
+    # Get the AuctionSet object
+    auctionset = get_object_or_404(AuctionSet, pk=auctionset_id)
+
+    # Create an in-memory output file for the workbook.
+    output = BytesIO()
+
+    # Create a workbook and add a worksheet.
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"AuctionSet {auctionset.id}"
+
+    # Prepare headers
+    headers = [
+        'Nazwa',        # Auction name
+        'Cena',         # Price in PLN
+        'Cena Euro',    # Price in Euro
+        'Wysyłka',      # Shipping price
+        'Nr części',    # Part number (serial_numbers)
+        'Tagi',         # Tags
+        'Opis',         # Description
+        'Kategoria',    # Category
+        'Producent',    # Manufacturer (from parameters)
+        'Pierwsze zdjęcie'  # Thumbnail image path
+    ]
+
+    # Collect all unique parameter names used in the auctions
+    parameter_names = set()
+    for auction in auctionset.auctions.all():
+        auction_parameters = AuctionParameter.objects.filter(auction=auction)
+        for ap in auction_parameters:
+            parameter_names.add(ap.parameter.name)
+
+    parameter_names = list(parameter_names)
+    headers.extend(parameter_names)
+
+    # Write headers to the worksheet
+    ws.append(headers)
+
+    # Write data for each auction
+    for auction in auctionset.auctions.all():
+        row = [
+            auction.name,
+            auction.price_pln,
+            auction.price_euro,
+            auction.shipment_price,
+            auction.serial_numbers,
+            auction.tags,
+            auction.description,
+            auction.category,
+            '',  # Placeholder for Producent
+            ''   # Placeholder for Pierwsze zdjęcie
+        ]
+
+        # Get 'Producent' from parameters if it exists
+        producent_value = ''
+        producent_param = AuctionParameter.objects.filter(
+            auction=auction,
+            parameter__name='Producent'
+        ).first()
+        if producent_param:
+            producent_value = producent_param.value_name
+        row[8] = producent_value  # Set Producent value
+
+        # Get the thumbnail image path
+        pierwsze_zdjecie = ''
+        if auction.photoset and auction.photoset.thumbnail:
+            pierwsze_zdjecie = auction.photoset.thumbnail.name
+        row[9] = pierwsze_zdjecie  # Set Pierwsze zdjęcie value
+
+        # Create a dictionary of parameters for quick access
+        auction_parameters = AuctionParameter.objects.filter(auction=auction)
+        param_dict = {ap.parameter.name: ap.value_name for ap in auction_parameters}
+
+        # Add parameter values to the row
+        for param_name in parameter_names:
+            row.append(param_dict.get(param_name, ''))
+
+        # Append the row to the worksheet
+        ws.append(row)
+
+    # Save the workbook to the in-memory output file
+    wb.save(output)
+    output.seek(0)
+
+    # Set up the HttpResponse with the appropriate headers
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename=AuctionSet_{auctionset.id}.xlsx'
+
+    return response

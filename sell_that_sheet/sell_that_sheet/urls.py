@@ -17,6 +17,7 @@ from .views import (
     AllegroMatchCategoryView,
     AllegroGetCategoryByIdView,
     GetModelStructure,
+    download_auctionset_xlsx,
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -81,4 +82,5 @@ urlpatterns = [
         GetModelStructure.as_view(),
         name="get_model_structure",
     ),
+    path('download/auctionset/<int:auctionset_id>/', download_auctionset_xlsx, name='download_auctionset_xlsx'),
 ]
