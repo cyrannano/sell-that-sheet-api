@@ -4,7 +4,7 @@ import json
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Auction, PhotoSet, Photo, AuctionSet, AuctionParameter, Parameter
+from .models import Auction, PhotoSet, Photo, AuctionSet, AuctionParameter, Parameter, AllegroAuthToken
 from .services import list_directory_contents, AllegroConnector
 from .serializers import (
     AuctionSerializer,
@@ -17,6 +17,8 @@ from .serializers import (
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
+from django.utils import timezone
+import datetime
 from django.shortcuts import redirect, render
 import requests
 
@@ -111,18 +113,22 @@ class AllegroLoginView(APIView):
     def get(self, request):
         connector = AllegroConnector()
         authorization_url = connector.get_authorization_url()
-        print(authorization_url)
 
-        # make a get request to the authorization_url
-        return redirect(authorization_url)
+        return Response({"authorization_url": authorization_url})
 
 
 class AllegroCallbackView(APIView):
     def get(self, request):
         connector = AllegroConnector()
         token = connector.fetch_token(request.build_absolute_uri())
-        os.environ["allegro_token"] = json.dumps(token)
+        # os.environ["allegro_token"] = json.dumps(token)
         # Store the token securely (e.g., in the session or database)
+        AllegroAuthToken.objects.all().delete()
+        AllegroAuthToken.objects.create(
+            access_token=token["access_token"],
+            refresh_token=token["refresh_token"],
+            expires_at=timezone.make_aware(datetime.datetime.fromtimestamp(token["expires_at"])),
+        )
         return Response(
             {"message": "Token fetched successfully"}, status=status.HTTP_200_OK
         )

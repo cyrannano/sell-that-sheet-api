@@ -3,3 +3,4 @@ from .photoset import PhotoSet
 from .auction import Auction
 from .auctionset import AuctionSet
 from .parameter import Parameter, AuctionParameter
+from .allegroAuthToken import AllegroAuthToken

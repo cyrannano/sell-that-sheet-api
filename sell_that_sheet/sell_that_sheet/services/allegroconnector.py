@@ -3,6 +3,10 @@ from django.conf import settings
 import requests
 import os
 import json
+from ..models import AllegroAuthToken
+from django.utils import timezone
+from datetime import timedelta
+
 
 CLIENT_ID = settings.ALLEGRO_CLIENT_ID
 CLIENT_SECRET = settings.ALLEGRO_CLIENT_SECRET
@@ -34,9 +38,26 @@ class AllegroConnector:
         new_token = self.oauth.refresh_token(TOKEN_URL, refresh_token=refresh_token, **extra)
         return new_token
 
+    def get_allegro_access_token(self):
+        # Get the allegro auth token from the database
+        token = AllegroAuthToken.objects.first()
+        if token:
+            # Check if the token is expired
+            if token.expires_at < timezone.now():
+                # Refresh the token
+                new_token = self.refresh_token(token.refresh_token)
+                token.access_token = new_token['access_token']
+                token.refresh_token = new_token['refresh_token']
+                token.expires_at = timezone.now() + timedelta(seconds=new_token['expires_in'])
+                token.save()
+            return token.access_token
+        return None
+
+
+
     def make_authenticated_get_request(self, request, url, params=None):
         # Assuming the token is stored in the session for this example
-        access_token = json.loads(os.environ['allegro_token']).get('access_token')
+        access_token = self.get_allegro_access_token()
         headers = {
             'Authorization': f'Bearer {access_token}',
             'Accept': 'application/vnd.allegro.public.v1+json'
