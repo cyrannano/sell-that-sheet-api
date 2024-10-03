@@ -21,6 +21,7 @@ mysqlclient = "^2.2.4"
 requests-oauthlib = "^2.0.0"
 setuptools = "^69.5.1"
 black = {extras = ["d"], version = "^24.4.2"}
+django-filter = "^24.3"
 
 
 [build-system]

@@ -1,6 +1,8 @@
 import os
 
 import json
+
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -53,7 +55,9 @@ class AuctionParameterViewSet(viewsets.ModelViewSet):
 
 class ParameterViewSet(viewsets.ModelViewSet):
     queryset = Parameter.objects.all()
+    filter_backends = [DjangoFilterBackend]
     serializer_class = ParameterSerializer
+    filterset_fields = ["allegro_id"]
 
 
 class DirectoryBrowseView(APIView):
@@ -236,6 +240,7 @@ def download_auctionset_xlsx(request, auctionset_id):
             parameter_names.add(ap.parameter.name)
 
     parameter_names = list(parameter_names)
+
     headers.extend(parameter_names)
 
     # Write headers to the worksheet
