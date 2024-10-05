@@ -18,6 +18,7 @@ from .views import (
     AllegroGetCategoryByIdView,
     GetModelStructure,
     download_auctionset_xlsx,
+    UserView,
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -54,6 +55,8 @@ urlpatterns = [
     ),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
     path("admin/", admin.site.urls),
+    path("api/user/", UserView.as_view(), name="user data"),
+    path("api/user/<int:user_id>", UserView.as_view(), name="user data"),
     path("api/browse/", DirectoryBrowseView.as_view(), name="directory-browse"),
     path(
         "api/browse/<path:path>", DirectoryBrowseView.as_view(), name="directory-browse"

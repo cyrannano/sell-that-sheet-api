@@ -7,6 +7,7 @@ from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Auction, PhotoSet, Photo, AuctionSet, AuctionParameter, Parameter, AllegroAuthToken
+from django.contrib.auth.models import User
 from .services import list_directory_contents, AllegroConnector
 from .serializers import (
     AuctionSerializer,
@@ -104,6 +105,37 @@ class LogoutView(APIView):
         return Response(
             {"message": "Successfully logged out."}, status=status.HTTP_200_OK
         )
+
+class UserView(APIView):
+    """
+    This view returns user data
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id=None):
+        if user_id:
+            user = User.objects.get(pk=user_id)
+            return Response(
+                {
+                    "userData": {
+                        "userName": user.get_short_name(),
+                        "userLogin": user.get_username(),
+                    }
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {
+                "userData": {
+                    "userName": request.user.get_short_name(),
+                    "userLogin": request.user.get_username(),
+                }
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 
 class AllegroLoginView(APIView):
