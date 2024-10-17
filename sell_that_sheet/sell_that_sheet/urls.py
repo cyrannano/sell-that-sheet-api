@@ -19,6 +19,7 @@ from .views import (
     GetModelStructure,
     download_auctionset_xlsx,
     UserView,
+    UploadAuctionSetToBaselinkerView,
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -86,4 +87,5 @@ urlpatterns = [
         name="get_model_structure",
     ),
     path('download/auctionset/<int:auctionset_id>/', download_auctionset_xlsx, name='download_auctionset_xlsx'),
+    path('auctionsets/baselinker/upload/<int:auctionset_id>', UploadAuctionSetToBaselinkerView.as_view(), name='upload_auctionset_to_baselinker'),
 ]

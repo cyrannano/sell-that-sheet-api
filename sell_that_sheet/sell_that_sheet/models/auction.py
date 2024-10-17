@@ -13,6 +13,7 @@ class Auction(models.Model):
     description = models.TextField(null=True)
     category = models.CharField(max_length=15, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    amount = models.IntegerField(default=1)
 
     def __str__(self):
         return self.name

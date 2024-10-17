@@ -25,6 +25,8 @@ import datetime
 from django.shortcuts import redirect, render
 import requests
 
+from .services.baselinkerservice import BaseLinkerService
+
 
 class AuctionViewSet(viewsets.ModelViewSet):
     queryset = Auction.objects.all()
@@ -230,6 +232,15 @@ class GetModelStructure(APIView):
 
         except LookupError:
             return JsonResponse({"error": "Model not found"}, status=404)
+
+class UploadAuctionSetToBaselinkerView(APIView):
+    def post(self, request, auctionset_id):
+        auctionset = AuctionSet.objects.get(pk=auctionset_id)
+        baselinker_service = BaseLinkerService()
+        response = baselinker_service.upload_products(auctionset)
+        return Response(response)
+
+
 
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse

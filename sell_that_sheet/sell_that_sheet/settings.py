@@ -161,6 +161,11 @@ REST_FRAMEWORK = {
     ],
 }
 
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 MEDIA_ROOT = os.environ["STS_MEDIA_ROOT"]
 APP_FILESYSTEM_ROOT = os.environ["STS_APP_FILESYSTEM_ROOT"]
@@ -172,3 +177,12 @@ ALLEGRO_TOKEN_URL = os.environ["ALLEGRO_TOKEN_URL"]
 ALLEGRO_REDIRECT_URI = os.environ["ALLEGRO_REDIRECT_URI"]
 ALLEGRO_SCOPES = os.environ["ALLEGRO_SCOPES"]
 ALLEGRO_STATE = os.environ["ALLEGRO_STATE"]
+BASELINKER_API_KEY = os.environ["BASELINKER_API_KEY"]
+
+SHIPMENT_WEIGHT_MAPPING = {
+    10: 15,
+    30: 15,
+    40: 40,
+    150: 150,
+    200: 200
+}

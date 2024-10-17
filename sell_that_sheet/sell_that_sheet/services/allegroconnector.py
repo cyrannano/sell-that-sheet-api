@@ -53,6 +53,9 @@ class AllegroConnector:
             return token.access_token
         return None
 
+    def get_category_tree(self, cat_id):
+        url = 'https://api.allegro.pl' + f'/sale/categories/{cat_id}'
+        return self.make_authenticated_get_request('get_category_tree', url)
 
 
     def make_authenticated_get_request(self, request, url, params=None):
