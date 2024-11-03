@@ -10,5 +10,5 @@ class AuctionSerializer(serializers.ModelSerializer):
 
     price_euro = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
     tags = serializers.CharField(allow_null=True, allow_blank=True)
-    serial_numbers = serializers.CharField(allow_null=True, allow_blank=True)
+    serial_numbers = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     description = serializers.CharField(allow_null=True, allow_blank=True)
