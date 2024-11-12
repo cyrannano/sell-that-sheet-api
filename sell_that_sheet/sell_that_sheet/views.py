@@ -1,8 +1,10 @@
+import base64
 import os
 
 import json
 
 from django_filters.rest_framework import DjangoFilterBackend
+from django.conf import settings
 from pydantic import BaseModel
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
@@ -12,9 +14,10 @@ from .models.addInventoryProduct import prepare_tags
 from django.contrib.auth.models import User
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from django.views.decorators.csrf import csrf_exempt
 
 from .serializers.inputtagpreview import InputTagField
-from .services import list_directory_contents, AllegroConnector
+from .services import list_directory_contents, AllegroConnector, perform_ocr
 from .serializers import (
     AuctionSerializer,
     PhotoSetSerializer,
@@ -367,3 +370,85 @@ class PrepareTagFieldPreview(APIView):
 
         response = prepare_tags(categoryId, auctionName, auctionTags)
         return Response(response)
+
+class PerformOcrView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['image_path'],
+            properties={
+                'image_path': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Path to the image file to be processed. Images larger than 1MB will be automatically resized.'
+                ),
+            },
+        ),
+        responses={
+            200: 'Success',
+            400: 'Bad Request',
+            500: 'Internal Server Error',
+        },
+        operation_description="Perform OCR on the provided image file. Images larger than 1MB will be automatically resized."
+    )
+    def post(self, request):
+        try:
+            data = request.data
+            image_path = data.get('image_path', '')
+
+            # Validate the image_path
+            if not image_path:
+                return Response(
+                    {'error': 'Image path is required.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Process image path
+            # Assuming the image_path format is 'images//<relative_path>'
+            if "images//" not in image_path:
+                return Response(
+                    {'error': 'Invalid image path format.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Extract the relative path after 'images//'
+            relative_image_path = image_path.split("images//", 1)[1]
+
+            # Normalize the path to prevent directory traversal
+            normalized_path = os.path.normpath(relative_image_path)
+
+            if normalized_path.startswith('..') or os.path.isabs(normalized_path):
+                return Response(
+                    {'error': 'Invalid image path.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Construct the full file system path
+            image_full_path = os.path.join(settings.MEDIA_ROOT, normalized_path)
+
+            # Check if the file exists
+            if not os.path.exists(image_full_path):
+                return Response(
+                    {'error': 'Image file does not exist.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+
+            # Perform OCR on the image
+            parsed_text = perform_ocr(image_full_path)
+
+            return Response({'parsed_text': parsed_text}, status=status.HTTP_200_OK)
+
+        except requests.exceptions.RequestException as e:
+            # Log the exception (replace with proper logging in production)
+            print('Error communicating with OCR API:', e)
+            return Response(
+                {'error': 'Failed to communicate with the OCR API.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except Exception as e:
+            # Log the exception (replace with proper logging in production)
+            print('Error performing OCR:', e)
+            return Response(
+                {'error': 'An error occurred during OCR processing.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
