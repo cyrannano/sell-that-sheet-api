@@ -3,11 +3,17 @@ import os
 import json
 
 from django_filters.rest_framework import DjangoFilterBackend
+from pydantic import BaseModel
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Auction, PhotoSet, Photo, AuctionSet, AuctionParameter, Parameter, AllegroAuthToken
+from .models.addInventoryProduct import prepare_tags
 from django.contrib.auth.models import User
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
+from .serializers.inputtagpreview import InputTagField
 from .services import list_directory_contents, AllegroConnector
 from .serializers import (
     AuctionSerializer,
@@ -343,3 +349,21 @@ def download_auctionset_xlsx(request, auctionset_id):
     response['Content-Disposition'] = f'attachment; filename=AuctionSet_{auctionset.id}.xlsx'
 
     return response
+
+class PrepareTagFieldPreview(APIView):
+    @swagger_auto_schema(
+        request_body=InputTagField,
+        responses={200: 'Success'},
+        operation_description="Preview tags based on the input data"
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = InputTagField(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        categoryId = serializer.validated_data['categoryId']
+        auctionName = serializer.validated_data['auctionName']
+        auctionTags = serializer.validated_data['auctionTags']
+
+        response = prepare_tags(categoryId, auctionName, auctionTags)
+        return Response(response)

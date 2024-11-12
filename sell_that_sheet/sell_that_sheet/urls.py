@@ -20,6 +20,7 @@ from .views import (
     download_auctionset_xlsx,
     UserView,
     UploadAuctionSetToBaselinkerView,
+    PrepareTagFieldPreview,
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -88,4 +89,5 @@ urlpatterns = [
     ),
     path('download/auctionset/<int:auctionset_id>/', download_auctionset_xlsx, name='download_auctionset_xlsx'),
     path('auctionsets/baselinker/upload/<int:auctionset_id>', UploadAuctionSetToBaselinkerView.as_view(), name='upload_auctionset_to_baselinker'),
+    path('tag-preview/', PrepareTagFieldPreview.as_view(), name='tag_preview'),
 ]

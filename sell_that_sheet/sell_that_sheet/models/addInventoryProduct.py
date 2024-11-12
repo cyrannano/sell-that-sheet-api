@@ -5,10 +5,109 @@ from .parameter import AuctionParameter
 from django.conf import settings
 from ..services.utils import parse_photos, limit_photo_size
 from pydantic import BaseModel
+import sqlite3
+import re
 
+conn = sqlite3.connect(settings.CUSTOM_PROPERTIES_DB_PATH, check_same_thread=False)
+cursor = conn.cursor()
+
+def get_category_tags(category_id):
+    cursor.execute("SELECT tags FROM category_tags WHERE category_id = ?", (category_id,))
+    fetched = cursor.fetchone()
+    if fetched is not None:
+        return fetched[0]
+    else:
+        return None
+
+def get_custom_tags():
+    cursor.execute("SELECT key, value FROM custom_tags")
+    return cursor.fetchall()
+
+
+def create_dates_from_name(name, tags):
+    res = re.search("[0-9]+\-[0-9]+", name)
+    from_tags = False
+    if res == None:
+        res = re.search("\([0-9]+\-[0-9]+\)", tags)
+        from_tags = True
+    if res == None:
+        return ''
+    try:
+        if from_tags:
+            dates = res.group()[1:-1].split("-")
+        else:
+            dates = res.group().split("-")
+
+        date_start, date_end = dates
+        date_start = int(date_start)
+        date_end = int(date_end)
+
+        if date_start > 49 and date_start < 1000:
+            date_start = date_start + 1900
+        elif date_start <= 49:
+            date_start = date_start + 2000
+
+        if date_end > 49 and date_end < 1000:
+            date_end = date_end + 1900
+        elif date_end <= 49:
+            date_end = date_end + 2000
+
+        info_string = ''
+
+        for x in range(date_start, date_end + 1):
+            info_string += str(x) + " " + str(x)[2:] + " "
+
+        return info_string
+    except:
+        return ''
 
 def map_shipment_to_weight(shipment):
     return settings.SHIPMENT_WEIGHT_MAPPING[int(float(shipment))]
+
+def get_category_part_number_field_name(category_id):
+    return "Numer katalogowy części"
+
+def get_category_tags_field_name(category_id):
+    return "Numer katalogowy oryginału"
+
+def add_side_to_tags(val):
+    ret_val = ''
+    if "prawa" in val.strip() or "prawy" in val.strip():
+        ret_val += "prawa prawy prawe prawo "
+    elif "lewa" in val.strip() or "lewy" in val.strip():
+        ret_val += "lewa lewy lewe lewo "
+
+    if "przód" in val.strip():
+        ret_val += "przód przednie przedni przednia"
+    elif "tył" in val.strip():
+        ret_val += "tył tyłnie tylni tylna tylny"
+
+    return ret_val
+
+def prepare_tags(category, name, tags):
+    try:
+        for ct in get_custom_tags():
+            if ct[0].upper() in name.upper() or ct[0].upper() in tags.upper():
+                if ct[0].upper() == 'LIFT':
+                    if not 'LIFT ' in name.upper() or 'PRZED LIFT' in name.upper():
+                        continue
+                tags = str(tags) + " " + str(ct[1])
+    except Exception as e:
+        raise Exception("Nie udało się dodać własnych tagów\n" + str(e)) from e
+        print("Nie udało się dodać własnych tagów", e)
+
+    try:
+        category_tags = get_category_tags(int(float(category)))
+        if category_tags is not None:
+            tags += " " + category_tags
+    except Exception as e:
+        raise Exception("Nie udało się dodać tagów z kategorii\n" + str(e)) from e
+        print("Nie udało się dodać tagów z kategorii", e)
+
+    tags += " " + create_dates_from_name(name, tags)
+    tags += " " + add_side_to_tags(name)
+
+    return tags.upper()
 
 class AddInventoryProduct(BaseModel):
     inventory_id: str
@@ -53,6 +152,11 @@ class AddInventoryProduct(BaseModel):
         # Add parameters (features) from AuctionParameter
         parameters = AuctionParameter.objects.filter(auction=auction)
         features = {param.parameter.name: param.value_name for param in parameters}
+
+        # Add category specific fields
+        features[get_category_part_number_field_name(auction.category)] = auction.serial_numbers
+        features[get_category_tags_field_name(auction.category)] = prepare_tags(auction.name, auction.tags)
+
 
         sku_code = f"{author} SP_{int(auction.shipment_price)} {price_euro} {photoset.thumbnail.name} {photoset.directory_location}"
 
