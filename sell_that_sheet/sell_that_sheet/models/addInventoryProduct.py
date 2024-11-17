@@ -155,7 +155,7 @@ class AddInventoryProduct(BaseModel):
 
         # Add category specific fields
         features[get_category_part_number_field_name(auction.category)] = auction.serial_numbers
-        features[get_category_tags_field_name(auction.category)] = prepare_tags(auction.name, auction.tags)
+        features[get_category_tags_field_name(auction.category)] = prepare_tags(auction.category, auction.name, auction.tags)
 
 
         sku_code = f"{author} SP_{int(auction.shipment_price)} {price_euro} {photoset.thumbnail.name} {photoset.directory_location}"
