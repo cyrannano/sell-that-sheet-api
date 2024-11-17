@@ -1,6 +1,9 @@
 from django.db import models
 import os
 from typing import Dict, Optional, List, Union
+
+from numpy.ma.core import divide
+
 from .parameter import AuctionParameter
 from django.conf import settings
 from ..services.utils import parse_photos, limit_photo_size
@@ -70,6 +73,9 @@ def get_category_part_number_field_name(category_id):
 def get_category_tags_field_name(category_id):
     return "Numer katalogowy oryginału"
 
+def get_category_auto_tags_field_name(category):
+    return "Numery katalogowe zamienników"
+
 def add_side_to_tags(val):
     ret_val = ''
     if "prawa" in val.strip() or "prawy" in val.strip():
@@ -83,6 +89,26 @@ def add_side_to_tags(val):
         ret_val += "tył tyłnie tylni tylna tylny"
 
     return ret_val
+
+
+def divideString(string, max_size=40, sep="|"):
+    size = 0
+    res_string = ''
+    string = str(string).split()
+    for x in range(len(string)):
+        word = string[x]
+        if (size + len(word) + 1 >= max_size):
+            size = len(word)
+            string[x - 1] += sep
+        else:
+            size += len(word) + 1
+
+    for x in string:
+        res_string += x
+        if res_string[-1] != sep:
+            res_string += ' '
+
+    return res_string
 
 def prepare_tags(category, name, tags):
     try:
@@ -104,10 +130,12 @@ def prepare_tags(category, name, tags):
         raise Exception("Nie udało się dodać tagów z kategorii\n" + str(e)) from e
         print("Nie udało się dodać tagów z kategorii", e)
 
-    tags += " " + create_dates_from_name(name, tags)
-    tags += " " + add_side_to_tags(name)
+    new_tags = ''
 
-    return tags.upper()
+    new_tags_tags += " " + create_dates_from_name(name, tags)
+    new_tags_tags += " " + add_side_to_tags(name)
+
+    return divideString(new_tags.upper())
 
 class AddInventoryProduct(BaseModel):
     inventory_id: str
@@ -157,7 +185,8 @@ class AddInventoryProduct(BaseModel):
 
         # Add category specific fields
         features[get_category_part_number_field_name(auction.category)] = auction.serial_numbers
-        features[get_category_tags_field_name(auction.category)] = prepare_tags(auction.category, auction.name, auction.tags)
+        features[get_category_tags_field_name(auction.category)] = divideString(auction.tags.upper())
+        features[get_category_auto_tags_field_name(auction.category)] = prepare_tags(auction.category, auction.name, auction.tags)
 
 
         sku_code = f"{author} SP_{int(auction.shipment_price)} {price_euro} {photoset.thumbnail.name} {photoset.directory_location}"
