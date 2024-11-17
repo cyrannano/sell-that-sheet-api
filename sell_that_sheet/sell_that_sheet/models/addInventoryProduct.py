@@ -146,6 +146,8 @@ class AddInventoryProduct(BaseModel):
         photoset = auction.photoset
 
         photos = list(map(lambda photo: os.path.join(settings.MEDIA_ROOT, photoset.directory_location, photo.name), photoset.photos.all()))
+        # sort photos by name
+        photos.sort()
         photos = parse_photos(photos)
         photos = limit_photo_size(photos)
         photos = {i: photo for i, photo in enumerate(photos)}
