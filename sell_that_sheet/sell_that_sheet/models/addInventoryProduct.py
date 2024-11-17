@@ -111,13 +111,14 @@ def divideString(string, max_size=40, sep="|"):
     return res_string
 
 def prepare_tags(category, name, tags):
+    new_tags = ''
     try:
         for ct in get_custom_tags():
             if ct[0].upper() in name.upper() or ct[0].upper() in tags.upper():
                 if ct[0].upper() == 'LIFT':
                     if not 'LIFT ' in name.upper() or 'PRZED LIFT' in name.upper():
                         continue
-                tags = str(tags) + " " + str(ct[1])
+                new_tags = str(tags) + " " + str(ct[1])
     except Exception as e:
         raise Exception("Nie udało się dodać własnych tagów\n" + str(e)) from e
         print("Nie udało się dodać własnych tagów", e)
@@ -125,12 +126,11 @@ def prepare_tags(category, name, tags):
     try:
         category_tags = get_category_tags(int(float(category)))
         if category_tags is not None:
-            tags += " " + category_tags
+            new_tags += " " + category_tags
     except Exception as e:
         raise Exception("Nie udało się dodać tagów z kategorii\n" + str(e)) from e
         print("Nie udało się dodać tagów z kategorii", e)
 
-    new_tags = ''
 
     new_tags += " " + create_dates_from_name(name, tags)
     new_tags += " " + add_side_to_tags(name)
