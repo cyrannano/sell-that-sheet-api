@@ -68,6 +68,7 @@ class BaseLinkerService:
             if category['name'] == tree:
                 return category['category_id']
         # If not found, create a new category
+        print(f"Creating new category: {tree}")
         return self.create_category(tree)
 
     def get_manufacturers(self) -> List[Dict]:
@@ -123,7 +124,7 @@ class BaseLinkerService:
         products = []
         tmp_dir = prepare_temp_directory()
         for auction in auctionset.auctions.all():
-            product = AddInventoryProduct.from_auction(auction=auction, inventory_id=1430, author="TEST", match_manufacturer=self.match_manufacturer, match_category=self.match_category)
+            product = AddInventoryProduct.from_auction(auction=auction, inventory_id=1430, match_manufacturer=self.match_manufacturer, match_category=self.match_category, owner=auctionset.owner, author=auctionset.creator)
             products.append(product)
         remove_temp_directory(tmp_dir)
         return products

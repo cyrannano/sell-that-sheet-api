@@ -1,3 +1,4 @@
+from .custom_user import CustomUser
 from .photo import Photo
 from .photoset import PhotoSet
 from .auction import Auction

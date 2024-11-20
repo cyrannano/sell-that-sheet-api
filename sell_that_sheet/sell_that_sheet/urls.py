@@ -22,6 +22,7 @@ from .views import (
     UploadAuctionSetToBaselinkerView,
     PrepareTagFieldPreview,
     PerformOcrView,
+    ListGroupUsersView,
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -67,6 +68,7 @@ urlpatterns = [
     path("api/login/", LoginView.as_view(), name="login"),
     path("api/logout/", LogoutView.as_view(), name="logout"),
     path('api/perform-ocr/', PerformOcrView.as_view(), name='perform_ocr'),
+    path('api/group-users/<str:group_name>/', ListGroupUsersView.as_view(), name='group_users'),
     path("allegro/login/", AllegroLoginView.as_view(), name="allegro_login"),
     path("allegro/callback/", AllegroCallbackView.as_view(), name="allegro_callback"),
     path(

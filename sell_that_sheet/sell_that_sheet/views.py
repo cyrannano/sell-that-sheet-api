@@ -7,11 +7,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.conf import settings
 from pydantic import BaseModel
 from rest_framework import viewsets, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Auction, PhotoSet, Photo, AuctionSet, AuctionParameter, Parameter, AllegroAuthToken
 from .models.addInventoryProduct import prepare_tags
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.views.decorators.csrf import csrf_exempt
@@ -57,7 +58,26 @@ class AuctionSetViewSet(viewsets.ModelViewSet):
     serializer_class = AuctionSetSerializer
 
     def perform_create(self, serializer):
-        serializer.save(creator=self.request.user)
+        # Get the creator (current user)
+        creator = self.request.user
+
+        # Check if the creator belongs to the "owners" group
+        owners_group = Group.objects.filter(name="owners").first()
+        is_creator_owner = owners_group and creator in owners_group.user_set.all()
+
+        # Check if the owner is explicitly set in the request
+        owner = serializer.validated_data.get('owner')
+
+        if owner is None:
+            if is_creator_owner:
+                # Automatically set owner to the creator if they are in the "owners" group
+                owner = creator
+            else:
+                # Raise an error if the creator is not in the "owners" group
+                raise ValidationError({"detail": "Nie podano właściciela pakietu"})
+
+        # Save the instance with the appropriate owner and creator
+        serializer.save(creator=creator, owner=owner)
 
 
 class AuctionParameterViewSet(viewsets.ModelViewSet):
@@ -452,3 +472,23 @@ class PerformOcrView(APIView):
                 {'error': 'An error occurred during OCR processing.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class ListGroupUsersView(APIView):
+    def get(self, request, group_name):
+        try:
+            group = Group.objects.get(name=group_name)
+            users = group.user_set.all()
+            user_data = [
+                {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                }
+                for user in users
+            ]
+        except Group.DoesNotExist:
+            return Response(
+                {'error': f'Group {group_name} does not exist.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        return Response(user_data)

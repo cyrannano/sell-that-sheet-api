@@ -54,9 +54,24 @@ class AllegroConnector:
         return None
 
     def get_category_tree(self, cat_id):
-        url = 'https://api.allegro.pl' + f'/sale/categories/{cat_id}'
-        return self.make_authenticated_get_request('get_category_tree', url)
+        # Base URL for the API endpoint
+        url = f"https://api.allegro.pl/sale/categories/{cat_id}"
 
+        # Fetch category data
+        category_data = self.make_authenticated_get_request('get_category_tree', url)
+
+        # Extract name and parent
+        category_name = category_data.get("name", "")
+        parent_category = category_data.get("parent")
+
+        # If there's a parent, recursively get its category tree
+        if parent_category:
+            parent_id = parent_category.get("id")
+            if parent_id:  # Ensure parent ID is not None
+                return f"{self.get_category_tree(parent_id)}/{category_name}"
+
+        # If there's no parent, return the current category name
+        return category_name
 
     def make_authenticated_get_request(self, request, url, params=None):
         # Assuming the token is stored in the session for this example

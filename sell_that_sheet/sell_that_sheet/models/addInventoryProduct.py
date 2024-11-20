@@ -160,8 +160,9 @@ class AddInventoryProduct(BaseModel):
     links: Optional[Dict[str, Dict]] = None
     bundle_products: Optional[Dict[str, int]] = None
 
+
     @classmethod
-    def from_auction(cls, inventory_id, author, auction, match_manufacturer, match_category):
+    def from_auction(cls, inventory_id, auction, match_manufacturer, match_category, owner, author):
         """
         Converts an Auction object into an AddInventoryProduct instance.
         """
@@ -189,7 +190,11 @@ class AddInventoryProduct(BaseModel):
         features[get_category_auto_tags_field_name(auction.category)] = prepare_tags(auction.category, auction.name, auction.tags)
 
 
-        sku_code = f"{author} SP_{int(auction.shipment_price)} {price_euro} {photoset.thumbnail.name} {photoset.directory_location}"
+        sku_code = f"{owner.username[0].upper()} SP_{int(auction.shipment_price)} {price_euro} {photoset.thumbnail.name} {photoset.directory_location}"
+
+        star = author.star_id if author.star_id else 0
+
+
 
         # Create product dictionary
         product_data = {
@@ -199,6 +204,7 @@ class AddInventoryProduct(BaseModel):
             "sku": sku_code,
             "prices": {"1184": float(auction.price_pln)},
             "category_id": category,
+            "star": int(star),
             # "manufacturer_id": manufacturer,
             "text_fields": {
                 "name": product_name,
