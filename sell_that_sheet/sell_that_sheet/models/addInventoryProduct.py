@@ -182,7 +182,7 @@ class AddInventoryProduct(BaseModel):
         photos = {i: photo for i, photo in enumerate(photos)}
         # Add parameters (features) from AuctionParameter
         parameters = AuctionParameter.objects.filter(auction=auction)
-        features = {param.parameter.name: param.value_name for param in parameters}
+        features = {param.parameter.name: param.value_name.replace(',', '|') for param in parameters}
 
         # Add category specific fields
         features[get_category_part_number_field_name(auction.category)] = auction.serial_numbers
