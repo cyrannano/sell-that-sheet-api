@@ -90,6 +90,8 @@ def add_side_to_tags(val):
 
     return ret_val
 
+def remove_duplicates(string):
+    return ' '.join(dict.fromkeys(string.split()))
 
 def divideString(string, max_size=40, sep="|"):
     size = 0
@@ -136,7 +138,7 @@ def prepare_tags(category, name, tags):
     new_tags += " " + add_side_to_tags(name)
 
     # remove duplicate words
-    new_tags = ' '.join(dict.fromkeys(new_tags.split()))
+    new_tags = remove_duplicates(new_tags)
 
     return divideString(new_tags.upper())
 
@@ -189,7 +191,7 @@ class AddInventoryProduct(BaseModel):
 
         # Add category specific fields
         features[get_category_part_number_field_name(auction.category)] = auction.serial_numbers
-        features[get_category_tags_field_name(auction.category)] = divideString(auction.tags.upper())
+        features[get_category_tags_field_name(auction.category)] = divideString(remove_duplicates(auction.tags).upper())
         features[get_category_auto_tags_field_name(auction.category)] = prepare_tags(auction.category, auction.name, auction.tags)
 
 
