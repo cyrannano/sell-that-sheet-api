@@ -135,6 +135,9 @@ def prepare_tags(category, name, tags):
     new_tags += " " + create_dates_from_name(name, tags)
     new_tags += " " + add_side_to_tags(name)
 
+    # remove duplicate words
+    new_tags = ' '.join(dict.fromkeys(new_tags.split()))
+
     return divideString(new_tags.upper())
 
 class AddInventoryProduct(BaseModel):
