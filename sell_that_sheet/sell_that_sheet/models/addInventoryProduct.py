@@ -195,7 +195,7 @@ class AddInventoryProduct(BaseModel):
         features[get_category_auto_tags_field_name(auction.category)] = prepare_tags(auction.category, auction.name, auction.tags)
 
 
-        sku_code = f"{owner.username[0].upper()[:3]} {author.username.upper()[:3]} SP_{int(auction.shipment_price)} {int(price_euro)} {photoset.thumbnail.name.split('.')[0]} {photoset.directory_location}"
+        sku_code = f"{owner.username[0].upper()} {author.username.upper()[:3]} SP_{int(auction.shipment_price)} {int(price_euro)} {photoset.thumbnail.name.split('.')[0]} {photoset.directory_location}"
 
         star = author.star_id if author.star_id else 0
 
