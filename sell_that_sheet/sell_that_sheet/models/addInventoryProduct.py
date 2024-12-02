@@ -142,6 +142,12 @@ def prepare_tags(category, name, tags):
 
     return divideString(new_tags.upper())
 
+def safe_cast_int(val):
+    try:
+        return int(val)
+    except:
+        return ''
+
 class AddInventoryProduct(BaseModel):
     inventory_id: str
     product_id: Optional[str] = None
@@ -195,7 +201,7 @@ class AddInventoryProduct(BaseModel):
         features[get_category_auto_tags_field_name(auction.category)] = prepare_tags(auction.category, auction.name, auction.tags)
 
 
-        sku_code = f"{owner.username[0].upper()} {author.username.upper()[:3]} SP_{int(auction.shipment_price)} {int(price_euro)} {photoset.thumbnail.name.split('.')[0]} {photoset.directory_location}"
+        sku_code = f"{owner.username[0].upper()} {author.username.upper()[:3]} SP_{safe_cast_int(auction.shipment_price)} {safe_cast_int(price_euro)} {photoset.thumbnail.name.split('.')[0]} {photoset.directory_location}"
 
         star = author.star_id if author.star_id else 0
 
