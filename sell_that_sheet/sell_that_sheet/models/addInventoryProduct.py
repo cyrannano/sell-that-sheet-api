@@ -28,40 +28,45 @@ def get_custom_tags():
 
 
 def create_dates_from_name(name, tags):
-    res = re.search("[0-9]+\-[0-9]+", name)
+    # Strict regex for 1 or 2-digit year ranges
+    res = re.search(r"\b(\d{1,2})-(\d{1,2})\b", name)
     from_tags = False
-    if res == None:
-        res = re.search("\([0-9]+\-[0-9]+\)", tags)
+
+    # If not found in name, search in tags with parentheses
+    if res is None:
+        res = re.search(r"\((\d{1,2})-(\d{1,2})\)", tags)
         from_tags = True
-    if res == None:
+
+    # If still not found, return empty string
+    if res is None:
         return ''
+
     try:
-        if from_tags:
-            dates = res.group()[1:-1].split("-")
-        else:
-            dates = res.group().split("-")
+        # Extract years
+        date_start, date_end = map(int, res.groups())
 
-        date_start, date_end = dates
-        date_start = int(date_start)
-        date_end = int(date_end)
+        # Normalize years
+        if 0 <= date_start <= 49:
+            date_start += 2000
+        elif 50 <= date_start <= 99:
+            date_start += 1900
 
-        if date_start > 49 and date_start < 1000:
-            date_start = date_start + 1900
-        elif date_start <= 49:
-            date_start = date_start + 2000
+        if 0 <= date_end <= 49:
+            date_end += 2000
+        elif 50 <= date_end <= 99:
+            date_end += 1900
 
-        if date_end > 49 and date_end < 1000:
-            date_end = date_end + 1900
-        elif date_end <= 49:
-            date_end = date_end + 2000
+        # Ensure date_start <= date_end
+        if date_start > date_end:
+            return ''  # Invalid range
 
-        info_string = ''
-
-        for x in range(date_start, date_end + 1):
-            info_string += str(x) + " " + str(x)[2:] + " "
+        # Generate info string
+        info_string = ' '.join(f"{year} {str(year)[2:]}" for year in range(date_start, date_end + 1))
 
         return info_string
-    except:
+    except Exception as e:
+        # Log error for debugging
+        print(f"Error processing dates: {e}")
         return ''
 
 def map_shipment_to_weight(shipment):
