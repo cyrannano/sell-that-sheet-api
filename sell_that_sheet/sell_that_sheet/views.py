@@ -18,7 +18,7 @@ from drf_yasg import openapi
 from django.views.decorators.csrf import csrf_exempt
 
 from .serializers.inputtagpreview import InputTagField
-from .services import list_directory_contents, AllegroConnector, perform_ocr
+from .services import list_directory_contents, AllegroConnector, perform_ocr, put_files_in_completed_directory
 from .serializers import (
     AuctionSerializer,
     PhotoSetSerializer,
@@ -104,6 +104,38 @@ class DirectoryBrowseView(APIView):
             )
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CompleteFilesView(APIView):
+    """
+    API view to mark an auction's files as complete by moving them
+    to a completed directory.
+    """
+
+    def get(self, request, auction_id=None, *args, **kwargs):
+        if not auction_id:
+            return Response(
+                {"error": "Auction ID is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Retrieve the auction instance
+        auction = get_object_or_404(Auction, id=auction_id)
+
+        try:
+            completed_dir = put_files_in_completed_directory(auction)
+            return Response(
+                {
+                    "message": "Files moved successfully",
+                },
+                status=status.HTTP_200_OK,
+            )
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print the exception stack trace (replace with proper logging in production)
+            print(e)
+            return Response({"error": "Unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class LoginView(APIView):

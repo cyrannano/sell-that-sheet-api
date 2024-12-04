@@ -1,5 +1,10 @@
 import os
+import shutil
+
 from django.conf import settings
+from django.views.static import directory_index
+
+from ..models import Auction, PhotoSet
 
 IMAGES_EXTENSIONS = [".jpg", ".JPG", ".jpeg", ".JPEG", ".png", ".PNG", ".bmp", ".BMP", ".webp", ".WEBP"]
 
@@ -61,3 +66,68 @@ def delete_directory(path, recursive=False):
     else:
         os.rmdir(full_path)
     return full_path
+
+
+def move_files(file_paths, destination_dir, rename_map=None):
+    """
+    Move files to a specified directory with an optional renaming feature.
+
+    :param file_paths: List of paths of files to move.
+    :param destination_dir: The directory to which the files should be moved.
+    :param rename_map: Optional dictionary to rename files.
+                       Key is the original file name, value is the new name.
+    :return: Dictionary containing the original file paths as keys and
+             their new paths as values.
+    """
+    if not os.path.exists(destination_dir):
+        os.makedirs(destination_dir)  # Create destination directory if it doesn't exist
+
+    moved_files = {}
+    for file_path in file_paths:
+        if not os.path.isfile(file_path):
+            print(f"Skipping: {file_path} (Not a valid file)")
+            continue
+
+        file_name = os.path.basename(file_path)
+        new_name = rename_map.get(file_name, file_name) if rename_map else file_name
+        new_path = os.path.join(destination_dir, new_name)
+
+        try:
+            shutil.move(file_path, new_path)
+            moved_files[file_path] = new_path
+            print(f"Moved: {file_path} -> {new_path}")
+        except Exception as e:
+            print(f"Error moving {file_path} to {new_path}: {e}")
+
+    return moved_files
+
+def put_files_in_completed_directory(auction):
+    """
+    Move main image and other images to the completed directory.
+
+    :param auction: Auction object.
+    :return: Dictionary containing the original file paths as keys and
+             their new paths as values.
+    """
+    auction_name = auction.name
+
+    photoset: PhotoSet = auction.photoset
+
+    directory_location = photoset.directory_location
+    main_image = photoset.thumbnail.name
+    other_images = photoset.photos.all()
+    # completed directory is a directory WYSTAWIONE located in the same directory as the main image currently
+    completed_dir = os.path.join(settings.MEDIA_ROOT, directory_location, "WYSTAWIONE")
+    rename_map = {os.path.basename(main_image): f"{os.path.basename(main_image)} {auction_name}.jpg"}
+
+    all_files = list(map(lambda x: os.path.join(settings.MEDIA_ROOT, directory_location, x.name), other_images))
+
+    moved_files = move_files(all_files, completed_dir, rename_map)
+
+    # Update the paths in the database
+    auction.photoset.directory_location = completed_dir
+
+    # Save the changes
+    auction.photoset.save()
+
+    return moved_files
