@@ -131,3 +131,17 @@ def put_files_in_completed_directory(auction):
     auction.photoset.save()
 
     return moved_files
+
+def put_files_from_auctionset_in_completed_directory(auction_set):
+    """
+    Move all files from all auctions in the auction set to the completed directory.
+
+    :param auction_set: AuctionSet object.
+    :return: Dictionary containing the original file paths as keys and
+             their new paths as values.
+    """
+    moved_files = {}
+    for auction in auction_set.auctions.all():
+        moved_files.update(put_files_in_completed_directory(auction))
+
+    return moved_files

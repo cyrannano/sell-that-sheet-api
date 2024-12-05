@@ -64,6 +64,7 @@ urlpatterns = [
     path("api/user/<int:user_id>", UserView.as_view(), name="user data"),
     path("api/browse/", DirectoryBrowseView.as_view(), name="directory-browse"),
     path('api/complete-files/<int:auction_id>', CompleteFilesView.as_view(), name='complete_files'),
+    path('api/complete-auctionset-files/<int:auction_set_id>', CompleteFilesView.as_view(), name='complete_files'),
     path(
         "api/browse/<path:path>", DirectoryBrowseView.as_view(), name="directory-browse"
     ),

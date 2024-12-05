@@ -36,6 +36,7 @@ from django.shortcuts import redirect, render
 import requests
 
 from .services.baselinkerservice import BaseLinkerService
+from .services.directorybrowser import put_files_from_auctionset_in_completed_directory
 
 
 class AuctionViewSet(viewsets.ModelViewSet):
@@ -124,6 +125,37 @@ class CompleteFilesView(APIView):
 
         try:
             completed_dir = put_files_in_completed_directory(auction)
+            return Response(
+                {
+                    "message": "Files moved successfully",
+                },
+                status=status.HTTP_200_OK,
+            )
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print the exception stack trace (replace with proper logging in production)
+            print(e)
+            return Response({"error": "Unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class CompleteAuctionSetFilesView(APIView):
+    """
+    API view to mark an auction's files as complete by moving them
+    to a completed directory.
+    """
+
+    def get(self, request, auction_set_id=None, *args, **kwargs):
+        if not auction_set_id:
+            return Response(
+                {"error": "Auction ID is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Retrieve the auctionset instance
+        auction_set = get_object_or_404(AuctionSet, id=auction_set_id)
+
+        try:
+            completed_dir = put_files_from_auctionset_in_completed_directory(auction_set)
             return Response(
                 {
                     "message": "Files moved successfully",
