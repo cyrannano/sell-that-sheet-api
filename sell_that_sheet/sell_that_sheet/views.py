@@ -58,6 +58,12 @@ class PhotoViewSet(viewsets.ModelViewSet):
 class DescriptionTemplateViewSet(viewsets.ModelViewSet):
     queryset = DescriptionTemplate.objects.all()
     serializer_class = DescriptionTemplateSerializer
+    permission_classes = [IsAuthenticated]  # Ensure only authenticated users can access this endpoint
+
+    def perform_create(self, serializer):
+        # Automatically set the owner to the currently logged-in user
+        serializer.save(owner=self.request.user)
+
 
 class GetUsersDescriptionTemplates(APIView):
     def get(self, request, user_id):
