@@ -101,6 +101,16 @@ def move_files(file_paths, destination_dir, rename_map=None):
 
     return moved_files
 
+def sanitize_filename(name):
+    """
+    Convert a string to a safe filename by replacing invalid characters.
+
+    :param name: The string to convert.
+    :return: The converted string.
+    """
+    invalid_chars = r'<>:"/\|?*'
+    return "".join(c if c not in invalid_chars else " " for c in name)
+
 def put_files_in_completed_directory(auction):
     """
     Move main image and other images to the completed directory.
@@ -118,7 +128,7 @@ def put_files_in_completed_directory(auction):
     other_images = photoset.photos.all()
     # completed directory is a directory WYSTAWIONE located in the same directory as the main image currently
     completed_dir = os.path.join(settings.MEDIA_ROOT, directory_location, "WYSTAWIONE")
-    rename_map = {os.path.basename(main_image): f"{os.path.basename(main_image)} {auction_name}.jpg"}
+    rename_map = {os.path.basename(main_image): f"{os.path.basename(main_image)} {sanitize_filename(auction_name)}.jpg"}
 
     all_files = list(map(lambda x: os.path.join(settings.MEDIA_ROOT, directory_location, x.name), other_images))
 
