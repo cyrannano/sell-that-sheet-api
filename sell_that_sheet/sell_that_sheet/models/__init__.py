@@ -6,3 +6,4 @@ from .auctionset import AuctionSet
 from .parameter import Parameter, AuctionParameter
 from .allegroAuthToken import AllegroAuthToken
 from .addInventoryProduct import AddInventoryProduct, AddInventoryProductResponse
+from .decription_template import DescriptionTemplate

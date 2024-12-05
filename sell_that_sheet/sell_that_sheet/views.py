@@ -10,7 +10,8 @@ from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Auction, PhotoSet, Photo, AuctionSet, AuctionParameter, Parameter, AllegroAuthToken
+from .models import Auction, PhotoSet, Photo, AuctionSet, AuctionParameter, Parameter, AllegroAuthToken, \
+    DescriptionTemplate
 from .models.addInventoryProduct import prepare_tags
 from django.contrib.auth.models import User, Group
 from drf_yasg.utils import swagger_auto_schema
@@ -26,6 +27,7 @@ from .serializers import (
     AuctionSetSerializer,
     AuctionParameterSerializer,
     ParameterSerializer,
+    DescriptionTemplateSerializer,
 )
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
@@ -53,6 +55,15 @@ class PhotoViewSet(viewsets.ModelViewSet):
     queryset = Photo.objects.all()
     serializer_class = PhotoSerializer
 
+class DescriptionTemplateViewSet(viewsets.ModelViewSet):
+    queryset = DescriptionTemplate.objects.all()
+    serializer_class = DescriptionTemplateSerializer
+
+class GetUsersDescriptionTemplates(APIView):
+    def get(self, request, user_id):
+        templates = DescriptionTemplate.objects.filter(owner=user_id)
+        serializer = DescriptionTemplateSerializer(templates, many=True)
+        return Response(serializer.data)
 
 class AuctionSetViewSet(viewsets.ModelViewSet):
     queryset = AuctionSet.objects.all()
@@ -147,7 +158,7 @@ class CompleteAuctionSetFilesView(APIView):
     def get(self, request, auction_set_id=None, *args, **kwargs):
         if not auction_set_id:
             return Response(
-                {"error": "Auction ID is required"},
+                {"error": "AuctionSet ID is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

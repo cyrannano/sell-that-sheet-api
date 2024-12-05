@@ -23,7 +23,8 @@ from .views import (
     PrepareTagFieldPreview,
     PerformOcrView,
     ListGroupUsersView,
-    CompleteFilesView, CompleteAuctionSetFilesView
+    CompleteFilesView, CompleteAuctionSetFilesView, DescriptionTemplateViewSet,
+    GetUsersDescriptionTemplates
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -37,6 +38,7 @@ router.register(r"photos", PhotoViewSet)
 router.register(r"auctionsets", AuctionSetViewSet)
 router.register(r"auctionparameters", AuctionParameterViewSet)
 router.register(r"parameters", ParameterViewSet)
+router.register(r"descriptiontemplate", DescriptionTemplateViewSet)
 
 # Schema view for Swagger and ReDoc documentation
 schema_view = get_schema_view(
@@ -64,7 +66,7 @@ urlpatterns = [
     path("api/user/<int:user_id>", UserView.as_view(), name="user data"),
     path("api/browse/", DirectoryBrowseView.as_view(), name="directory-browse"),
     path('api/complete-files/<int:auction_id>', CompleteFilesView.as_view(), name='complete_files'),
-    path('api/complete-auctionset-files/<int:auction_set_id>', CompleteAuctionSetFilesView.as_view(), name='complete_files'),
+    path('api/complete-auctionset-files/<int:auction_set_id>', CompleteAuctionSetFilesView.as_view(), name='complete_auctionset_files'),
     path(
         "api/browse/<path:path>", DirectoryBrowseView.as_view(), name="directory-browse"
     ),
@@ -72,6 +74,7 @@ urlpatterns = [
     path("api/logout/", LogoutView.as_view(), name="logout"),
     path('api/perform-ocr/', PerformOcrView.as_view(), name='perform_ocr'),
     path('api/group-users/<str:group_name>/', ListGroupUsersView.as_view(), name='group_users'),
+    path('api/description-templates/user/<int:user_id>/', GetUsersDescriptionTemplates.as_view(), name='description_templates'),
     path("allegro/login/", AllegroLoginView.as_view(), name="allegro_login"),
     path("allegro/callback/", AllegroCallbackView.as_view(), name="allegro_callback"),
     path(
