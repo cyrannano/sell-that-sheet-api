@@ -64,6 +64,10 @@ class DescriptionTemplateViewSet(viewsets.ModelViewSet):
         # Automatically set the owner to the currently logged-in user
         serializer.save(owner=self.request.user)
 
+    def get_queryset(self):
+        # Filter the queryset to include only objects owned by the currently authenticated user
+        return DescriptionTemplate.objects.filter(owner=self.request.user)
+
 
 class GetUsersDescriptionTemplates(APIView):
     def get(self, request, user_id):
