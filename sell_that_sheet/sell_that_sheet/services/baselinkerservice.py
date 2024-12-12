@@ -82,6 +82,7 @@ class BaseLinkerService:
 
     def match_manufacturer(self, name: str) -> Optional[int]:
         logger.info(f"Matching manufacturer for: {name}")
+        original_name = name
         name = name.lower()
         max_distance = 0.7
         matched_id = None
@@ -95,7 +96,7 @@ class BaseLinkerService:
                 matched_id = manufacturer['manufacturer_id']
 
         if not matched_id:
-            matched_id = self.create_manufacturer(name)
+            matched_id = self.create_manufacturer(original_name)
         return matched_id
 
     def create_manufacturer(self, name: str) -> int:

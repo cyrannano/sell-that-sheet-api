@@ -210,6 +210,10 @@ class AddInventoryProduct(BaseModel):
 
         star = author.star_id if author.star_id else 0
 
+        # Find manufacturer
+        manufacturer_parameter = filter(lambda x: "PRODUCENT" in x.parameter.name.upper(), parameters).__next__()
+        manufacturer = match_manufacturer(manufacturer_parameter.value_name)
+
 
 
         # Create product dictionary
@@ -221,7 +225,7 @@ class AddInventoryProduct(BaseModel):
             "prices": {"1184": float(auction.price_pln)},
             "category_id": category,
             "star": int(star),
-            # "manufacturer_id": manufacturer,
+            "manufacturer_id": manufacturer,
             "text_fields": {
                 "name": product_name,
                 "description": description,
