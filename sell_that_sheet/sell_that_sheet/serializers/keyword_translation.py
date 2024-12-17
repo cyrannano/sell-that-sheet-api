@@ -11,6 +11,6 @@ class KeywordTranslationSerializer(serializers.ModelSerializer):
 
         # Convert 'original' and 'translation' fields to lowercase
         def to_internal_value(self, data):
-            data['original'] = data['original'].lower()
-            data['translation'] = data['translation'].lower()
+            data['original'] = data['original'].lower().strip()
+            data['translation'] = data['translation'].lower().strip()
             return super().to_internal_value(data)
