@@ -99,8 +99,11 @@ class KeywordTranslationSearchView(APIView):
         language = request.data.get('language', '')
         _category = request.data.get('category', '')
 
-        if not keywords or not language:
+        if not keywords or not language or not _category:
             return Response({"error": "Fields: 'keywords', 'language' and 'category' are required."}, status=400)
+
+        # Convert keywords to lowercase
+        keywords = [keyword.lower() for keyword in keywords]
 
         # Fetch translations for the current user and the specified language
         translations = KeywordTranslation.objects.filter(
