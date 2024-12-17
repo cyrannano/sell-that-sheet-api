@@ -4,3 +4,4 @@ from .photo import PhotoSerializer
 from .auctionset import AuctionSetSerializer
 from .parameter import ParameterSerializer, AuctionParameterSerializer
 from .description_template import DescriptionTemplateSerializer
+from .keyword_translation import KeywordTranslationSerializer

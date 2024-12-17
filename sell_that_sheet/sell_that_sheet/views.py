@@ -10,8 +10,10 @@ from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from unicodedata import category
+
 from .models import Auction, PhotoSet, Photo, AuctionSet, AuctionParameter, Parameter, AllegroAuthToken, \
-    DescriptionTemplate
+    DescriptionTemplate, KeywordTranslation
 from .models.addInventoryProduct import prepare_tags
 from django.contrib.auth.models import User, Group
 from drf_yasg.utils import swagger_auto_schema
@@ -28,6 +30,7 @@ from .serializers import (
     AuctionParameterSerializer,
     ParameterSerializer,
     DescriptionTemplateSerializer,
+    KeywordTranslationSerializer,
 )
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
@@ -68,11 +71,58 @@ class DescriptionTemplateViewSet(viewsets.ModelViewSet):
         # Filter the queryset to include only objects owned by the currently authenticated user
         return DescriptionTemplate.objects.filter(owner=self.request.user)
 
-
 class GetUsersDescriptionTemplates(APIView):
     def get(self, request, user_id):
         templates = DescriptionTemplate.objects.filter(owner=user_id)
         serializer = DescriptionTemplateSerializer(templates, many=True)
+        return Response(serializer.data)
+
+class KeywordTranslationViewSet(viewsets.ModelViewSet):
+    queryset = KeywordTranslation.objects.all()
+    serializer_class = KeywordTranslationSerializer
+    permission_classes = [IsAuthenticated]  # Ensure only authenticated users can access this endpoint
+
+    def perform_create(self, serializer):
+        # Automatically set the owner to the currently logged-in user
+        serializer.save(author=self.request.user)
+
+    def get_queryset(self):
+        # Filter the queryset to include only objects owned by the currently authenticated user
+        return KeywordTranslation.objects.filter(author=self.request.user)
+
+class KeywordTranslationSearchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        # Extract the keywords and language from the request data
+        keywords = request.data.get('keywords', [])
+        language = request.data.get('language', '')
+        _category = request.data.get('category', '')
+
+        if not keywords or not language:
+            return Response({"error": "Fields: 'keywords', 'language' and 'category' are required."}, status=400)
+
+        # Fetch translations for the current user and the specified language
+        translations = KeywordTranslation.objects.filter(
+            author=request.user,
+            language=language,
+            original__in=keywords,
+            category=_category
+        )
+
+        # Build a dictionary of translations
+        translations_dict = {translation.original: translation.translated for translation in translations}
+
+        # Include keywords that have no existing translations
+        result = {keyword: translations_dict.get(keyword, None) for keyword in keywords}
+
+        return Response(result, status=200)
+
+
+class GetUsersKeywordTranslation(APIView):
+    def get(self, request, user_id):
+        templates = KeywordTranslation.objects.filter(author=user_id)
+        serializer = KeywordTranslationSerializer(templates, many=True)
         return Response(serializer.data)
 
 class AuctionSetViewSet(viewsets.ModelViewSet):

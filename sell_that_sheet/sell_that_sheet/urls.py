@@ -24,7 +24,7 @@ from .views import (
     PerformOcrView,
     ListGroupUsersView,
     CompleteFilesView, CompleteAuctionSetFilesView, DescriptionTemplateViewSet,
-    GetUsersDescriptionTemplates
+    GetUsersDescriptionTemplates, KeywordTranslationViewSet, GetUsersKeywordTranslation, KeywordTranslationSearchView
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -39,6 +39,9 @@ router.register(r"auctionsets", AuctionSetViewSet)
 router.register(r"auctionparameters", AuctionParameterViewSet)
 router.register(r"parameters", ParameterViewSet)
 router.register(r"descriptiontemplate", DescriptionTemplateViewSet)
+router.register(r"keywordtranslation", KeywordTranslationViewSet)
+# router.register(r'keyword-translation', KeywordTranslationViewSet, basename='keyword-translation')
+
 
 # Schema view for Swagger and ReDoc documentation
 schema_view = get_schema_view(
@@ -70,11 +73,13 @@ urlpatterns = [
     path(
         "api/browse/<path:path>", DirectoryBrowseView.as_view(), name="directory-browse"
     ),
+    path('keyword-translation/search/', KeywordTranslationSearchView.as_view(), name='keyword-translation-search'),
     path("api/login/", LoginView.as_view(), name="login"),
     path("api/logout/", LogoutView.as_view(), name="logout"),
     path('api/perform-ocr/', PerformOcrView.as_view(), name='perform_ocr'),
     path('api/group-users/<str:group_name>/', ListGroupUsersView.as_view(), name='group_users'),
     path('api/description-templates/user/<int:user_id>/', GetUsersDescriptionTemplates.as_view(), name='description_templates'),
+    path('api/keyword-translation/user/<int:user_id>/', GetUsersKeywordTranslation.as_view(), name='keyword_translation'),
     path("allegro/login/", AllegroLoginView.as_view(), name="allegro_login"),
     path("allegro/callback/", AllegroCallbackView.as_view(), name="allegro_callback"),
     path(
