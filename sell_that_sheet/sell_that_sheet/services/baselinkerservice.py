@@ -84,7 +84,7 @@ class BaseLinkerService:
         logger.info(f"Matching manufacturer for: {name}")
         original_name = name
         name = name.lower()
-        max_distance = 0.7
+        max_distance = 0.9
         matched_id = None
 
         for manufacturer in self.manufacturers:
