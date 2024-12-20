@@ -211,7 +211,7 @@ class AddInventoryProduct(BaseModel):
         star = author.star_id if author.star_id else 0
 
         # Find manufacturer
-        manufacturer_parameter = filter(lambda x: "PRODUCENT" in x.parameter.name.upper(), parameters).__next__()
+        manufacturer_parameter = filter(lambda x: "PRODUCENT" in x.parameter.name.upper() or "MARKA" in x.parameter.name.upper(), parameters).__next__()
         manufacturer = match_manufacturer(manufacturer_parameter.value_name)
 
 
