@@ -1,3 +1,4 @@
 from .directorybrowser import list_directory_contents, put_files_in_completed_directory
 from .allegroconnector import AllegroConnector
 from .ocr_service import perform_ocr
+from .openaiservice import OpenAiService

@@ -21,7 +21,7 @@ from drf_yasg import openapi
 from django.views.decorators.csrf import csrf_exempt
 
 from .serializers.inputtagpreview import InputTagField
-from .services import list_directory_contents, AllegroConnector, perform_ocr, put_files_in_completed_directory
+from .services import list_directory_contents, AllegroConnector, perform_ocr, put_files_in_completed_directory, OpenAiService
 from .serializers import (
     AuctionSerializer,
     PhotoSetSerializer,
@@ -630,3 +630,43 @@ class ListGroupUsersView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         return Response(user_data)
+
+
+class TranslateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['title', 'description'],
+            properties={
+                'title': openapi.Schema(type=openapi.TYPE_STRING, description='Title for translation'),
+                'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description for translation'),
+            },
+        ),
+        responses={
+            200: openapi.Response(
+                description='Translation result',
+                examples={
+                    'application/json': {
+                        'translation': 'Translated text here'
+                    }
+                }
+            ),
+            400: 'Bad Request',
+            401: 'Unauthorized',
+        },
+        operation_description="Translate the provided title and description using OpenAI"
+    )
+
+    def post(self, request, *args, **kwargs):
+        title = request.data.get('title')
+        description = request.data.get('description')
+
+        if not title or not description:
+            return Response({"error": "Title and description are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        openai_service = OpenAiService()
+        translation = openai_service.translate_completion(title=title, description=description)
+
+        return Response({"translation": translation}, status=status.HTTP_200_OK)

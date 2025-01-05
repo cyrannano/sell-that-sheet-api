@@ -24,6 +24,7 @@ black = {extras = ["d"], version = "^24.4.2"}
 django-filter = "^24.3"
 pillow = "^11.0.0"
 pydantic = "^2.9.2"
+openai = "^1.58.1"
 
 
 [build-system]
