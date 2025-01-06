@@ -242,6 +242,9 @@ class AddInventoryProduct(BaseModel):
             }
         }
 
+        if price_euro and price_euro > 0:
+            product_data["prices"]["4848"] = float(price_euro)
+
         return cls(**product_data)
 
 
