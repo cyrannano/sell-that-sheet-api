@@ -184,7 +184,9 @@ class AddInventoryProduct(BaseModel):
         """
         # Map basic auction fields
         product_name = auction.name
+        product_name_de = auction.translated_params.get("de", {}).get("name", "")
         description = auction.description if auction.description else ""
+        description_de = auction.translated_params.get("de", {}).get("description", "")
         price_euro = auction.price_euro
         category = match_category(auction.category)
         # manufacturer = match_manufacturer(auction.manufacturer)
@@ -228,8 +230,10 @@ class AddInventoryProduct(BaseModel):
             "manufacturer_id": manufacturer,
             "text_fields": {
                 "name": product_name,
+                "name|de": product_name_de,
                 "description": description,
-                "description|de": description,
+                "description_extra2": description_de,
+                "description_extra2|de": description_de,
                 "features": features,
             },
             "images": photos,

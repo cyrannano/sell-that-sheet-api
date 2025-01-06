@@ -1,6 +1,6 @@
 from django.db import models
 from .photoset import PhotoSet
-
+from django.db.models import JSONField
 
 class Auction(models.Model):
     name = models.CharField(max_length=255)
@@ -14,6 +14,7 @@ class Auction(models.Model):
     category = models.CharField(max_length=15, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     amount = models.IntegerField(default=1)
+    translated_params = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.name
