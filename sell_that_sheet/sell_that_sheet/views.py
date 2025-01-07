@@ -116,11 +116,20 @@ class KeywordTranslationSearchView(APIView):
             Q(category=_category) | Q(shared_across_categories=True)
         )
 
-        # Build a dictionary of translations
-        translations_dict = {translation.original: translation.translated for translation in translations}
+        # Build a dictionary of translations including 'translated' and 'shared_across_categories'
+        translations_dict = {
+            translation.original: {
+                "translated": translation.translated,
+                "shared": translation.shared_across_categories,
+            }
+            for translation in translations
+        }
 
         # Include keywords that have no existing translations
-        result = {keyword: translations_dict.get(keyword, None) for keyword in keywords}
+        result = {
+            keyword: translations_dict.get(keyword, {"translated": None, "shared": False})
+            for keyword in keywords
+        }
 
         return Response(result, status=200)
 
