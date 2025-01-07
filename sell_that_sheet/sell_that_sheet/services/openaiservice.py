@@ -63,7 +63,7 @@ And here is an example of the JSON response:
         thread = thread = self.client.beta.threads.create()
         message = self.client.beta.threads.messages.create(
             thread_id=thread.id,
-            content=f"Title: {title}\nDescription: {description}",
+            content=f"Title: {title.lower()}\nDescription: {description.lower()}",
             role="user",
         )
         run = self.client.beta.threads.runs.create_and_poll(
@@ -89,7 +89,7 @@ And here is an example of the JSON response:
             model=self.default_model,
             messages=[
                 {"role": "system", "content": self.instructions},
-                {"role": "user", "content": f"Title: {title}\nDescription: {description}"},
+                {"role": "user", "content": f"Title: {title.lower()}\nDescription: {description.lower()}"},
             ],
         )
         response_translation = json.loads(completition.choices[0].message.content)
