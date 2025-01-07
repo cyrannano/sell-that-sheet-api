@@ -9,3 +9,4 @@ class KeywordTranslation(models.Model):
     language = models.CharField(max_length=10)
     created_at = models.DateTimeField(auto_now_add=True)
     category = models.CharField(max_length=15)
+    shared_across_categories = models.BooleanField(default=False)

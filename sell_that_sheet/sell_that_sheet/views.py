@@ -14,6 +14,8 @@ from unicodedata import category
 
 from .models import Auction, PhotoSet, Photo, AuctionSet, AuctionParameter, Parameter, AllegroAuthToken, \
     DescriptionTemplate, KeywordTranslation
+from django.db.models import Q
+
 from .models.addInventoryProduct import prepare_tags
 from django.contrib.auth.models import User, Group
 from drf_yasg.utils import swagger_auto_schema
@@ -107,10 +109,11 @@ class KeywordTranslationSearchView(APIView):
 
         # Fetch translations for the current user and the specified language
         translations = KeywordTranslation.objects.filter(
-            author=request.user,
+            # author=request.user,
             language=language,
-            original__in=keywords,
-            category=_category
+            original__in=keywords
+        ).filter(
+            Q(category=_category) | Q(shared_across_categories=True)
         )
 
         # Build a dictionary of translations
