@@ -95,7 +95,6 @@ And here is an example of the JSON response:
         translation_dictionary = {original.lower(): translation.lower() for original, translation in translation_dictionary}
 
         instructions = self.instructions.format(translation_dictionary=json.dumps(translation_dictionary, indent=2))
-        print(instructions)
         completition = self.client.chat.completions.create(
             model=self.default_model,
             messages=[
