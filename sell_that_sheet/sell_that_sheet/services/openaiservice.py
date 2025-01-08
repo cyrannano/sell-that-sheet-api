@@ -2,6 +2,7 @@ import json
 
 from django.conf import settings
 from openai import OpenAI
+from ..models import KeywordTranslation
 
 class OpenAiService:
     def __init__(self):
@@ -25,37 +26,41 @@ Provide the translated title or/and description in plain text. Each title and co
 - **Title**: [Translated Title]
 - **Description**: [Translated Description]
 
+# Translation Dictionary
+While translating, consider the following common terms used in German auctions for aftermarket car parts. In polish to german translation:
+{translation_dictionary}
+
 # Notes
 
 - Ensure the translation uses specific aftermarket car part vocabulary commonly recognized in the German auction market.
 - Maintain the structural layout found in typical auction listings to ensure consistency and understandability in the intended market.
 
 Response in JSON format. Below is a JSON SCHEMA for the response:
-{
+{{
   "name": "translation_request",
   "strict": false,
-  "schema": {
+  "schema": {{
     "type": "object",
-    "properties": {
-      "title": {
+    "properties": {{
+      "title": {{
         "type": "string",
         "description": "Translated title."
-      },
-      "description": {
+      }},
+      "description": {{
         "type": "string",
         "description": "Translated description."
-      }
-    },
+      }}
+    }},
     "additionalProperties": false,
     "required": []
-  }
-}
+  }}
+}}
 
 And here is an example of the JSON response:
-{
+{{
   "title": "Translated Title",
   "description": "Translated Description"
-}
+}}
 """
         self.default_model = "gpt-4o-mini"
 
@@ -85,10 +90,15 @@ And here is an example of the JSON response:
             print(run.status)
 
     def translate_completion(self, title=None, description=None):
+        translation_dictionary = KeywordTranslation.objects.all().values_list('original', 'translated')
+        translation_dictionary = {original.lower(): translation.lower() for original, translation in translation_dictionary}
+
+        instructions = self.instructions.format(translation_dictionary=json.dumps(translation_dictionary, indent=2))
+        print(instructions)
         completition = self.client.chat.completions.create(
             model=self.default_model,
             messages=[
-                {"role": "system", "content": self.instructions},
+                {"role": "system", "content": instructions},
                 {"role": "user", "content": f"Title: {title.lower()}\nDescription: {description.lower()}"},
             ],
         )

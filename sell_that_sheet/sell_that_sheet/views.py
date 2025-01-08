@@ -23,7 +23,8 @@ from drf_yasg import openapi
 from django.views.decorators.csrf import csrf_exempt
 
 from .serializers.inputtagpreview import InputTagField
-from .services import list_directory_contents, AllegroConnector, perform_ocr, put_files_in_completed_directory, OpenAiService
+from .services import list_directory_contents, AllegroConnector, perform_ocr, put_files_in_completed_directory
+from .services.openaiservice import OpenAiService
 from .serializers import (
     AuctionSerializer,
     PhotoSetSerializer,
