@@ -702,7 +702,7 @@ class ImageRotateView(APIView):
             return Response({'error': 'Invalid image path format.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Extract the relative path after 'images//'
-        relative_image_path = image_path.split("images/", 1)[1]
+        relative_image_path = image_path.split("images//", 1)[1]
 
         # Normalize the path to prevent directory traversal
         normalized_path = os.path.normpath(relative_image_path)
