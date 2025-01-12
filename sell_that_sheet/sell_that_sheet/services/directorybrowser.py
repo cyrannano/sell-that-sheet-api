@@ -5,6 +5,7 @@ from django.conf import settings
 from django.views.static import directory_index
 
 from ..models import Auction, PhotoSet
+from .utils import rotate_image
 
 IMAGES_EXTENSIONS = [".jpg", ".JPG", ".jpeg", ".JPEG", ".png", ".PNG", ".bmp", ".BMP", ".webp", ".WEBP"]
 
@@ -155,3 +156,18 @@ def put_files_from_auctionset_in_completed_directory(auction_set):
         moved_files.update(put_files_in_completed_directory(auction))
 
     return moved_files
+
+def apply_rotation_to_image(file_path, direction):
+    """
+    Rotate an image file in the specified direction.
+
+    :param file_path: The path of the image file.
+    :param direction: The direction to rotate the image in. 90 for clockwise, -90 for counter-clockwise.
+    """
+
+    # Check if the file is an image
+    if not any(file_path.lower().endswith(ext) for ext in IMAGES_EXTENSIONS):
+        return
+
+    # Rotate the image
+    rotate_image(file_path, direction)

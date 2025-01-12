@@ -235,3 +235,26 @@ def normalize_unicode(text: str) -> str:
 def get_photo_base64(photo_path: str) -> str:
     with open(photo_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
+
+def rotate_image(image_path, degrees):
+    """
+    Rotate an image clockwise by 90 degrees.
+
+    :param image_path: Path to the image file.
+    :return: True if the image was rotated successfully, False otherwise.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        return False
+
+    try:
+        with Image.open(image_path) as img:
+            img = img.rotate(degrees, expand=True)
+            img.save(image_path)
+        return True
+    except Exception as e:
+        print(f"Error rotating image {image_path}: {e}")
+        return False
+
+

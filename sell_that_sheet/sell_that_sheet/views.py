@@ -44,7 +44,7 @@ from django.shortcuts import redirect, render
 import requests
 
 from .services.baselinkerservice import BaseLinkerService
-from .services.directorybrowser import put_files_from_auctionset_in_completed_directory
+from .services.directorybrowser import put_files_from_auctionset_in_completed_directory, apply_rotation_to_image
 
 
 class AuctionViewSet(viewsets.ModelViewSet):
@@ -683,3 +683,41 @@ class TranslateView(APIView):
         translation = openai_service.translate_completion(title=title, description=description)
 
         return Response({"translation": translation}, status=status.HTTP_200_OK)
+
+class ImageRotateView(APIView):
+    def post(self, request):
+        data = request.data
+        image_path = data.get('image_path', '')
+        angle = data.get('angle', 0)
+
+        if not image_path:
+            return Response({'error': 'Image path is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not angle:
+            return Response({'error': 'Angle is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Process image path
+        # Assuming the image_path format is 'images//<relative_path>'
+        if "images/" not in image_path:
+            return Response({'error': 'Invalid image path format.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Extract the relative path after 'images//'
+        relative_image_path = image_path.split("images/", 1)[1]
+
+        # Normalize the path to prevent directory traversal
+        normalized_path = os.path.normpath(relative_image_path)
+
+        if normalized_path.startswith('..') or os.path.isabs(normalized_path):
+            return Response({'error': 'Invalid image path.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Construct the full file system path
+        image_full_path = os.path.join(settings.MEDIA_ROOT, normalized_path)
+        print(image_full_path)
+        # Check if the file exists
+        if not os.path.exists(image_full_path):
+            return Response({'error': 'Image file does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Rotate the image
+        rotated_image_path = apply_rotation_to_image(image_full_path, angle)
+
+        return Response({'rotated_image_path': rotated_image_path}, status=status.HTTP_200_OK)
