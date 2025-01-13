@@ -5,6 +5,8 @@ import json
 
 from django_filters.rest_framework import DjangoFilterBackend
 from django.conf import settings
+from django.db.models import F
+
 from pydantic import BaseModel
 from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
@@ -181,15 +183,26 @@ class ParameterViewSet(viewsets.ModelViewSet):
 
 class DistinctParameterView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        parameters = Parameter.objects.all().distinct('name')
+        parameters = (
+            Parameter.objects.values('name')
+            .annotate(id=F('id'))
+            .distinct()
+        )
         serializer = ParameterSerializer(parameters, many=True)
         return Response(serializer.data)
 
+
 class DistinctAuctionParameterView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        parameters = AuctionParameter.objects.all().distinct('value_name')
+        parameters = (
+            AuctionParameter.objects.values('value_name')
+            .annotate(id=F('id'))
+            .distinct()
+        )
         serializer = AuctionParameterSerializer(parameters, many=True)
         return Response(serializer.data)
 
