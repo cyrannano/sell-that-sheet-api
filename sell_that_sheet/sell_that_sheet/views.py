@@ -179,6 +179,14 @@ class ParameterViewSet(viewsets.ModelViewSet):
     serializer_class = ParameterSerializer
     filterset_fields = ["allegro_id"]
 
+class DistinctParameterViewSet(viewsets.ModelViewSet):
+    queryset = Parameter.objects.all().distinct('name')
+    serializer_class = Parameter
+
+class DistinctAuctionParameterViewSet(viewsets.ModelViewSet):
+    queryset = AuctionParameter.objects.all().distinct('value_name')
+    serializer_class = AuctionParameter
+
 
 class DirectoryBrowseView(APIView):
     def get(self, request, path=None):
