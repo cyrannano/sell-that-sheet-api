@@ -190,8 +190,16 @@ class DistinctParameterView(APIView):
             .annotate(id=F('id'))
             .distinct()
         )
-        serializer = ParameterSerializer(parameters, many=True)
-        return Response(serializer.data)
+        result = [
+            {
+                "id": param.id,
+                "allegro_id": 0,
+                "name": param.name,
+                "type": param.type,
+            }
+            for param in parameters
+        ]
+        return Response(result)
 
 
 class DistinctAuctionParameterView(APIView):
@@ -203,8 +211,16 @@ class DistinctAuctionParameterView(APIView):
             .annotate(id=F('id'))
             .distinct()
         )
-        serializer = AuctionParameterSerializer(parameters, many=True)
-        return Response(serializer.data)
+        result = [
+            {
+                "parameter": param.parameter,
+                "value_name": param.value_name,
+                "value_id": param.value_id,
+                "auction": param.auction
+            }
+            for param in parameters
+        ]
+        return Response(result)
 
 
 class DirectoryBrowseView(APIView):
