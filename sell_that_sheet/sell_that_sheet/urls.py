@@ -27,8 +27,8 @@ from .views import (
     GetUsersDescriptionTemplates, KeywordTranslationViewSet, GetUsersKeywordTranslation, KeywordTranslationSearchView,
     TranslateView,
     ImageRotateView,
-    DistinctAuctionParameterViewSet,
-    DistinctParameterViewSet,
+    DistinctAuctionParameterView,
+    DistinctParameterView,
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -85,8 +85,8 @@ urlpatterns = [
     path('api/description-templates/user/<int:user_id>/', GetUsersDescriptionTemplates.as_view(), name='description_templates'),
     path('api/keyword-translation/user/<int:user_id>/', GetUsersKeywordTranslation.as_view(), name='keyword_translation'),
     path('api/image-rotate/', ImageRotateView.as_view(), name='image_rotate'),
-    path('distinct-auction-parameters/', DistinctAuctionParameterViewSet.as_view(), name='distinct_auction_parameters'),
-    path('distinct-parameters/', DistinctParameterViewSet.as_view(), name='distinct_parameters'),
+    path('distinct-auction-parameters/', DistinctAuctionParameterView.as_view(), name='distinct_auction_parameters'),
+    path('distinct-parameters/', DistinctParameterView.as_view(), name='distinct_parameters'),
     path("allegro/login/", AllegroLoginView.as_view(), name="allegro_login"),
     path("allegro/callback/", AllegroCallbackView.as_view(), name="allegro_callback"),
     path(
