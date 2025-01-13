@@ -192,10 +192,10 @@ class DistinctParameterView(APIView):
         )
         result = [
             {
-                "id": param.id,
+                "id": param['id'],
                 "allegro_id": 0,
-                "name": param.name,
-                "type": param.type,
+                "name": param['name'],
+                "type": "string",
             }
             for param in parameters
         ]
@@ -213,10 +213,10 @@ class DistinctAuctionParameterView(APIView):
         )
         result = [
             {
-                "parameter": param.parameter,
-                "value_name": param.value_name,
-                "value_id": param.value_id,
-                "auction": param.auction
+                "parameter": param['parameter'],
+                "value_name": param['value_name'],
+                "value_id": param['value_id'],
+                "auction": param['auction'],
             }
             for param in parameters
         ]
