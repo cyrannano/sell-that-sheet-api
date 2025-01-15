@@ -35,7 +35,6 @@ While translating, consider the following common terms used in German auctions f
 - Ensure the translation uses specific aftermarket car part vocabulary commonly recognized in the German auction market.
 - Maintain the structural layout found in typical auction listings to ensure consistency and understandability in the intended market.
 - Make sure the capitalization and punctuation are accurate in the translated content. You can assume the input might be incorrect in terms of capitalization and punctuation.
-- Limit the title translation to 80 characters
 
 Response in JSON format. Below is a JSON SCHEMA for the response:
 {{
@@ -96,6 +95,7 @@ And here is an example of the JSON response:
         translation_dictionary = {original.lower(): translation.lower() for original, translation in translation_dictionary}
 
         instructions = self.instructions.format(translation_dictionary=json.dumps(translation_dictionary, indent=2))
+        print(instructions)
         completition = self.client.chat.completions.create(
             model=self.default_model,
             messages=[
