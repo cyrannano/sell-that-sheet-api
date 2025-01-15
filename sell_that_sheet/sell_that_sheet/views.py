@@ -193,8 +193,8 @@ class DistinctParameterView(APIView):
         # .values() returns dictionaries, allowing us to specify the exact fields
         distinct_params = (
             Parameter.objects
-                     .values("id", "allegro_id", "name", "type")
-                     .distinct("name")
+                     .values("allegro_id", "name", "type")
+                     .distinct()
         )
         return Response(distinct_params, status=status.HTTP_200_OK)
 
@@ -206,8 +206,8 @@ class DistinctAuctionParameterView(APIView):
     def get(self, request, *args, **kwargs):
         distinct_auction_params = (
             AuctionParameter.objects
-                            .values("parameter", "value_name", "value_id", "auction")
-                            .distinct("value_name")
+                            .values("parameter", "value_name", "value_id")
+                            .distinct()
         )
         return Response(distinct_auction_params, status=status.HTTP_200_OK)
 
