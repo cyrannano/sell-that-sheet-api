@@ -35,6 +35,7 @@ While translating, consider the following common terms used in German auctions f
 - Ensure the translation uses specific aftermarket car part vocabulary commonly recognized in the German auction market.
 - Maintain the structural layout found in typical auction listings to ensure consistency and understandability in the intended market.
 - Make sure the capitalization and punctuation are accurate in the translated content. You can assume the input might be incorrect in terms of capitalization and punctuation.
+- Make sure to use the translation dictionary provided to ensure consistency with the terms used in the German auction market.
 
 Response in JSON format. Below is a JSON SCHEMA for the response:
 {{
