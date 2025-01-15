@@ -718,12 +718,13 @@ class TranslateView(APIView):
     def post(self, request, *args, **kwargs):
         title = request.data.get('title')
         description = request.data.get('description')
+        _category = request.data.get('category')
 
         if not title or not description:
             return Response({"error": "Title and description are required."}, status=status.HTTP_400_BAD_REQUEST)
 
         openai_service = OpenAiService()
-        translation = openai_service.translate_completion(title=title, description=description)
+        translation = openai_service.translate_completion(title=title, description=description, category=_category)
 
         return Response({"translation": translation}, status=status.HTTP_200_OK)
 

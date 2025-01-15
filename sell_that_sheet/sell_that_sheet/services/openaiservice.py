@@ -66,7 +66,7 @@ And here is an example of the JSON response:
 """
         self.default_model = "gpt-4o-mini"
 
-    def translate_assistant(self, title=None, description=None):
+    def translate_assistant(self, title=None, description=None, category=None):
         thread = thread = self.client.beta.threads.create()
         message = self.client.beta.threads.messages.create(
             thread_id=thread.id,
@@ -91,8 +91,8 @@ And here is an example of the JSON response:
         else:
             print(run.status)
 
-    def translate_completion(self, title=None, description=None):
-        translation_dictionary = KeywordTranslation.objects.all().values_list('original', 'translated')
+    def translate_completion(self, title=None, description=None, category=None):
+        translation_dictionary = KeywordTranslation.objects.filter(category=category).values_list('original', 'translated')
         translation_dictionary = {original.lower(): translation.lower() for original, translation in translation_dictionary}
 
         instructions = self.instructions.format(translation_dictionary=json.dumps(translation_dictionary, indent=2))
