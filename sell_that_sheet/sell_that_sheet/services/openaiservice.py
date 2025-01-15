@@ -1,6 +1,7 @@
 import json
 
 from django.conf import settings
+from django.db.models import Q
 from openai import OpenAI
 from ..models import KeywordTranslation
 
@@ -92,7 +93,7 @@ And here is an example of the JSON response:
             print(run.status)
 
     def translate_completion(self, title=None, description=None, category=None):
-        translation_dictionary = KeywordTranslation.objects.filter(category=category).values_list('original', 'translated')
+        translation_dictionary = KeywordTranslation.objects.filter(Q(category=category) | Q(shared_across_categories=True)).values_list('original', 'translated')
         translation_dictionary = {original.lower(): translation.lower() for original, translation in translation_dictionary}
 
         instructions = self.instructions.format(translation_dictionary=json.dumps(translation_dictionary, indent=2))
