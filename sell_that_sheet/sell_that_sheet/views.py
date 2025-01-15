@@ -182,45 +182,34 @@ class ParameterViewSet(viewsets.ModelViewSet):
     filterset_fields = ["allegro_id"]
 
 class DistinctParameterView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        parameters = (
-            Parameter.objects.values('name')
-            .annotate(id=F('id'))
-            .distinct()
+    """
+    Returns a list of distinct Parameter records
+    by (allegro_id, name, type).
+    Note: 'id' will not always match the ID of
+    one single row if there are duplicates in those fields,
+    but we include it in the dictionary for convenience.
+    """
+    def get(self, request, *args, **kwargs):
+        # .values() returns dictionaries, allowing us to specify the exact fields
+        distinct_params = (
+            Parameter.objects
+                     .values("id", "allegro_id", "name", "type")
+                     .distinct()
         )
-        result = [
-            {
-                "id": param['id'],
-                "allegro_id": 0,
-                "name": param['name'],
-                "type": "string",
-            }
-            for param in parameters
-        ]
-        return Response(result)
-
+        return Response(distinct_params, status=status.HTTP_200_OK)
 
 class DistinctAuctionParameterView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        parameters = (
-            AuctionParameter.objects.values('value_name')
-            .annotate(id=F('id'))
-            .distinct()
+    """
+    Returns a list of distinct AuctionParameter records
+    by (parameter, value_name, value_id, auction).
+    """
+    def get(self, request, *args, **kwargs):
+        distinct_auction_params = (
+            AuctionParameter.objects
+                            .values("parameter", "value_name", "value_id", "auction")
+                            .distinct()
         )
-        result = [
-            {
-                "parameter": param['parameter'],
-                "value_name": param['value_name'],
-                "value_id": param['value_id'],
-                "auction": param['auction'],
-            }
-            for param in parameters
-        ]
-        return Response(result)
+        return Response(distinct_auction_params, status=status.HTTP_200_OK)
 
 
 class DirectoryBrowseView(APIView):
