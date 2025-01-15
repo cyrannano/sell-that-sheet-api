@@ -193,7 +193,7 @@ class DistinctParameterView(APIView):
         # .values() returns dictionaries, allowing us to specify the exact fields
         distinct_params = (
             Parameter.objects
-                     .values("allegro_id", "name", "type")
+                     .values("id", "allegro_id", "name", "type")
                      .distinct()
         )
         return Response(distinct_params, status=status.HTTP_200_OK)
