@@ -191,10 +191,18 @@ class AddInventoryProduct(BaseModel):
         category = match_category(auction.category)
         # manufacturer = match_manufacturer(auction.manufacturer)
         photoset = auction.photoset
+        thumbnail = photoset.thumbnail
 
         photos = list(map(lambda photo: os.path.join(settings.MEDIA_ROOT, photoset.directory_location, photo.name), photoset.photos.all()))
         # sort photos by name
         photos.sort()
+
+        # remove thumbnail from photos
+        photos.remove(os.path.join(settings.MEDIA_ROOT, photoset.directory_location, thumbnail.name))
+
+        # add thumbnail to the first position
+        photos.insert(0, os.path.join(settings.MEDIA_ROOT, photoset.directory_location, thumbnail.name))
+
         photos = parse_photos(photos)
         photos = limit_photo_size(photos)
         photos = {i: photo for i, photo in enumerate(photos)}
