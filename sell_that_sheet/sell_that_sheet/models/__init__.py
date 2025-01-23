@@ -8,3 +8,4 @@ from .allegroAuthToken import AllegroAuthToken
 from .addInventoryProduct import AddInventoryProduct, AddInventoryProductResponse
 from .decription_template import DescriptionTemplate
 from .keyword_translation import KeywordTranslation
+from .translations import ParameterTranslation, AuctionParameterTranslation

@@ -5,3 +5,4 @@ from .auctionset import AuctionSetSerializer
 from .parameter import ParameterSerializer, AuctionParameterSerializer
 from .description_template import DescriptionTemplateSerializer
 from .keyword_translation import KeywordTranslationSerializer
+from .translations import  ParameterTranslationSerializer, AuctionParameterTranslationSerializer

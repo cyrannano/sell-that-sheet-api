@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from unicodedata import category
 
 from .models import Auction, PhotoSet, Photo, AuctionSet, AuctionParameter, Parameter, AllegroAuthToken, \
-    DescriptionTemplate, KeywordTranslation
+    DescriptionTemplate, KeywordTranslation, ParameterTranslation, AuctionParameterTranslation
 from django.db.models import Q
 
 from .models.addInventoryProduct import prepare_tags
@@ -36,6 +36,8 @@ from .serializers import (
     ParameterSerializer,
     DescriptionTemplateSerializer,
     KeywordTranslationSerializer,
+    ParameterTranslationSerializer,
+    AuctionParameterTranslationSerializer,
 )
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
@@ -210,6 +212,94 @@ class DistinctAuctionParameterView(APIView):
                             .distinct()
         )
         return Response(distinct_auction_params, status=status.HTTP_200_OK)
+
+
+class SaveTranslationsView(APIView):
+    """
+    Endpoint to save Parameter and AuctionParameter translations.
+    Expects JSON like:
+    {
+      "translations": {
+        "param-10": "My Param Translation",
+        "param-10-value-SomeValueName": "Sub-value translation",
+        ...
+      }
+    }
+    """
+
+    def post(self, request, *args, **kwargs):
+        translations_dict = request.data.get("translations", {})
+
+        for key, translation_text in translations_dict.items():
+            # skip empty translation if you want
+            if not translation_text or not translation_text.strip():
+                continue
+
+            parts = key.split("-")
+            # e.g. ["param", "<param_id>"] or ["param", "<param_id>", "value", "<value_name>"]
+
+            # Case 1: Parameter translation
+            if len(parts) == 2:
+                # param-<param_id>
+                param_id = parts[1]
+                try:
+                    param_obj = Parameter.objects.get(id=param_id)
+                except Parameter.DoesNotExist:
+                    continue
+
+                ParameterTranslation.objects.update_or_create(
+                    parameter=param_obj,
+                    defaults={"translation": translation_text},
+                )
+
+            # Case 2: AuctionParameter translation
+            elif len(parts) == 4 and parts[2] == "value":
+                # param-<param_id>-value-<value_name>
+                param_id = parts[1]
+                value_name = parts[3]
+
+                try:
+                    param_obj = Parameter.objects.get(id=param_id)
+                except Parameter.DoesNotExist:
+                    continue
+
+                # Find an existing AuctionParameter
+                auction_param_obj = AuctionParameter.objects.filter(
+                    parameter=param_obj,
+                    value_name=value_name
+                ).first()
+
+                if auction_param_obj:
+                    AuctionParameterTranslation.objects.update_or_create(
+                        auction_parameter=auction_param_obj,
+                        defaults={"translation": translation_text},
+                    )
+
+        return Response({"message": "Translations saved successfully."}, status=status.HTTP_200_OK)
+
+class ListTranslationsView(APIView):
+    """
+    GET: Returns a dict of all translations keyed by
+    "param-<param_id>" or "param-<param_id>-value-<value_name>".
+    """
+    def get(self, request, *args, **kwargs):
+        result = {}
+
+        # 1) Collect Parameter translations
+        param_translations = ParameterTranslation.objects.all()
+        for pt in param_translations:
+            key = f"param-{pt.parameter.id}"  # "param-<id>"
+            result[key] = pt.translation
+
+        # 2) Collect AuctionParameter translations
+        ap_translations = AuctionParameterTranslation.objects.all()
+        for apt in ap_translations:
+            param_id = apt.auction_parameter.parameter.id
+            value_name = apt.auction_parameter.value_name
+            key = f"param-{param_id}-value-{value_name}"
+            result[key] = apt.translation
+
+        return Response(result, status=status.HTTP_200_OK)
 
 
 class DirectoryBrowseView(APIView):

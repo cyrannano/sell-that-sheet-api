@@ -28,7 +28,7 @@ from .views import (
     TranslateView,
     ImageRotateView,
     DistinctAuctionParameterView,
-    DistinctParameterView,
+    DistinctParameterView, SaveTranslationsView, ListTranslationsView,
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -77,6 +77,8 @@ urlpatterns = [
     path(
         "api/browse/<path:path>", DirectoryBrowseView.as_view(), name="directory-browse"
     ),
+    path("api/translations/", ListTranslationsView.as_view(), name="list_translations"),
+    path("api/translations/save/", SaveTranslationsView.as_view(), name="save_translations"),
     path('keyword-translation/search/', KeywordTranslationSearchView.as_view(), name='keyword-translation-search'),
     path("api/login/", LoginView.as_view(), name="login"),
     path("api/logout/", LogoutView.as_view(), name="logout"),
