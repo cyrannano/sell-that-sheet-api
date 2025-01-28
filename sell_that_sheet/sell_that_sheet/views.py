@@ -218,91 +218,73 @@ class DistinctAuctionParameterView(APIView):
 
 
 class SaveTranslationsView(APIView):
-    """
-    Endpoint to save Parameter and AuctionParameter translations.
-    Expects JSON like:
-    {
-      "translations": {
-        "param-10": "My Param Translation",
-        "param-10-value-SomeValueName": "Sub-value translation",
-        ...
-      }
-    }
-    """
-
     def post(self, request, *args, **kwargs):
-        translations_dict = request.data.get("translations", {})
+        param_translations = request.data.get("param_translations", [])
+        auction_param_translations = request.data.get("auction_param_translations", [])
 
-        for key, translation_text in translations_dict.items():
-            # skip empty translation if you want
-            if not translation_text or not translation_text.strip():
+        # 1) Handle Parameter translations
+        for item in param_translations:
+            param_id = item.get("param_id")
+            translation_text = (item.get("translation") or "").strip()
+            if not translation_text:
                 continue
-
-            parts = key.split("-")
-            # e.g. ["param", "<param_id>"] or ["param", "<param_id>", "value", "<value_name>"]
-
-            # Case 1: Parameter translation
-            if len(parts) == 2:
-                # param-<param_id>
-                param_id = parts[1]
-                try:
-                    param_obj = Parameter.objects.get(id=param_id)
-                except Parameter.DoesNotExist:
-                    continue
-
+            try:
+                param_obj = Parameter.objects.get(id=param_id)
                 ParameterTranslation.objects.update_or_create(
                     parameter=param_obj,
                     defaults={"translation": translation_text},
                 )
+            except Parameter.DoesNotExist:
+                continue
 
-            # Case 2: AuctionParameter translation
-            elif len(parts) == 4 and parts[2] == "value":
-                # param-<param_id>-value-<value_name>
-                param_id = parts[1]
-                value_name = parts[3]
-
-                try:
-                    param_obj = Parameter.objects.get(id=param_id)
-                except Parameter.DoesNotExist:
-                    continue
-
-                # Find an existing AuctionParameter
+        # 2) Handle AuctionParameter translations
+        for item in auction_param_translations:
+            param_id = item.get("param_id")
+            value_name = item.get("value_name")
+            translation_text = (item.get("translation") or "").strip()
+            if not translation_text:
+                continue
+            try:
+                param_obj = Parameter.objects.get(id=param_id)
                 auction_param_obj = AuctionParameter.objects.filter(
                     parameter=param_obj,
                     value_name=value_name
                 ).first()
-
                 if auction_param_obj:
                     AuctionParameterTranslation.objects.update_or_create(
                         auction_parameter=auction_param_obj,
                         defaults={"translation": translation_text},
                     )
+            except Parameter.DoesNotExist:
+                continue
 
         return Response({"message": "Translations saved successfully."}, status=status.HTTP_200_OK)
 
 class ListTranslationsView(APIView):
-    """
-    GET: Returns a dict of all translations keyed by
-    "param-<param_id>" or "param-<param_id>-value-<value_name>".
-    """
     def get(self, request, *args, **kwargs):
-        result = {}
+        param_translations = []
+        auction_param_translations = []
 
-        # 1) Collect Parameter translations
-        param_translations = ParameterTranslation.objects.all()
-        for pt in param_translations:
-            key = f"param-{pt.parameter.id}"  # "param-<id>"
-            result[key] = pt.translation
+        # 1) Parameter translations
+        for pt in ParameterTranslation.objects.all():
+            param_translations.append({
+                "param_id": pt.parameter.id,
+                "translation": pt.translation
+            })
 
-        # 2) Collect AuctionParameter translations
-        ap_translations = AuctionParameterTranslation.objects.all()
-        for apt in ap_translations:
-            param_id = apt.auction_parameter.parameter.id
-            value_name = apt.auction_parameter.value_name
-            key = f"param-{param_id}-value-{value_name}"
-            result[key] = apt.translation
+        # 2) AuctionParameter translations
+        for apt in AuctionParameterTranslation.objects.all():
+            auction_param_translations.append({
+                "param_id": apt.auction_parameter.parameter.id,
+                "value_name": apt.auction_parameter.value_name,
+                "translation": apt.translation
+            })
 
-        return Response(result, status=status.HTTP_200_OK)
+        return Response({
+            "param_translations": param_translations,
+            "auction_param_translations": auction_param_translations
+        }, status=status.HTTP_200_OK)
+
 
 
 class DirectoryBrowseView(APIView):
