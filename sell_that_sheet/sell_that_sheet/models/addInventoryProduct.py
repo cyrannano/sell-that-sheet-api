@@ -4,7 +4,7 @@ from typing import Dict, Optional, List, Union
 
 from numpy.ma.core import divide
 
-from . import ParameterTranslation, AuctionParameterTranslation
+from .translations import ParameterTranslation, AuctionParameterTranslation
 from .parameter import AuctionParameter
 from django.conf import settings
 
