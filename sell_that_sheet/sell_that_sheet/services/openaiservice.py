@@ -3,7 +3,7 @@ import json
 from django.conf import settings
 from django.db.models import Q
 from openai import OpenAI
-from ..models import KeywordTranslation
+from ..models.keyword_translation import KeywordTranslation
 
 class OpenAiService:
     def __init__(self):
