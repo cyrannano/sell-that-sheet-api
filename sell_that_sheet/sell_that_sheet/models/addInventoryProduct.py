@@ -171,27 +171,35 @@ def safe_cast_int(val):
 def get_translated_features(auction):
     """
     Fetches translated auction parameters, leveraging both database translations and AI translations.
+    If a parameter name is translated but the value name is not, pass the translated name along with the original value name to OpenAI.
     """
     auction_parameters = AuctionParameter.objects.filter(auction=auction).select_related("parameter")
 
-    features = {param.parameter.name: param.value_name for param in auction_parameters}
     translated_features = {}
-    to_translate = []
+    to_translate = {}
 
     for param in auction_parameters:
         translations = get_translations(param)
-        if translations["parameter_translation"] and translations["value_translation"]:
-            translated_features[translations["parameter_translation"]] = translations["value_translation"]
-        else:
-            to_translate.append(param)
 
-    # AI Translation
+        parameter_translation = translations["parameter_translation"]
+        value_translation = translations["value_translation"]
+
+        if parameter_translation and value_translation:
+            # Both the parameter and value are translated, add them directly
+            translated_features[parameter_translation] = value_translation
+        elif parameter_translation and not value_translation:
+            # Parameter is translated, but value_name is not
+            # Pass the translated parameter name with the original value_name for OpenAI translation
+            to_translate[parameter_translation] = param.value_name
+        else:
+            # Neither the parameter nor the value_name is translated
+            to_translate[param.parameter.name] = param.value_name
+
+    # AI Translation for missing values
     openai_service = OpenAiService()
     try:
         if to_translate:
-            ai_translations = openai_service.translate_parameters(
-                {param.parameter.name: param.value_name for param in to_translate}
-            )
+            ai_translations = openai_service.translate_parameters(to_translate)
             translated_features.update(ai_translations)
     except json.JSONDecodeError:
         print(f"Failed to decode JSON response for auction {auction.id}")
