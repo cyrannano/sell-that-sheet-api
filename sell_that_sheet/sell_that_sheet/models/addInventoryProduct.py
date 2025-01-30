@@ -6,6 +6,8 @@ from numpy.ma.core import divide
 
 from .parameter import AuctionParameter
 from django.conf import settings
+
+from ..services.openaiservice import OpenAiService
 from ..services.utils import parse_photos, limit_photo_size
 from pydantic import BaseModel
 import sqlite3
@@ -209,6 +211,16 @@ class AddInventoryProduct(BaseModel):
         # Add parameters (features) from AuctionParameter
         parameters = AuctionParameter.objects.filter(auction=auction)
         features = {param.parameter.name: param.value_name for param in parameters}
+
+        openai_service = OpenAiService()
+        try:
+            translated_features = openai_service.translate_parameters(features)
+            translated_features = {key + "|de": value for key, value in translated_features.items() if value}
+            features.update(translated_features)
+        except json.JSONDecodeError:
+            print(f"Failed to decode JSON response for auction {auction.id}")
+        except Exception as e:
+            print(f"Failed to translate parameters for auction {auction.id}: {e}")
 
         # Add category specific fields
         features[get_category_part_number_field_name(auction.category)] = auction.serial_numbers

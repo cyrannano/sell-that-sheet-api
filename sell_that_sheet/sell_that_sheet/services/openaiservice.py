@@ -66,6 +66,27 @@ And here is an example of the JSON response:
 }}
 """
         self.default_model = "gpt-4o-mini"
+        self.parameter_translation_instructions = """
+        Translate a list of car parts parameters. Your job is to translate from Polish to German. You will be given pairs parameter-parameter_value and you should respond with translated pairs.
+
+Input will be given in json and you should respond with json. Dont output anything else beside json with translated pairs.
+
+example input: 
+[
+"Strona zabudowy": "lewa",
+"Rodzaj świateł mijania": "Laserowe",
+"Jakość części (zgodnie z GVO)" : "Q - oryginał z logo producenta części (OEM, OES)",
+"Otwory": "dla haka holowniczego"
+]
+
+example output: 
+[
+"Einbauposition": "Links",
+"Beleuchtungstechnik": "Laserlicht",
+"Teilequalität (gemäß GVO)" : "Q – Originalteil mit Logo des Teileherstellers (OEM, OES)",
+"Stoßstangenausschnitt": "Ausschnitt für Abschlepphaken"
+]
+"""
 
     def translate_assistant(self, title=None, description=None, category=None):
         thread = thread = self.client.beta.threads.create()
@@ -97,13 +118,23 @@ And here is an example of the JSON response:
         translation_dictionary = {original.lower(): translation.lower() for original, translation in translation_dictionary}
 
         instructions = self.instructions.format(translation_dictionary=json.dumps(translation_dictionary, indent=2))
-        print(instructions)
-        completition = self.client.chat.completions.create(
+        completion = self.client.chat.completions.create(
             model=self.default_model,
             messages=[
                 {"role": "system", "content": instructions},
                 {"role": "user", "content": f"Title: {title.lower()}\nDescription: {description.lower()}"},
             ],
         )
-        response_translation = json.loads(completition.choices[0].message.content)
+        response_translation = json.loads(completion.choices[0].message.content)
+        return response_translation
+
+    def translate_parameters(self, parameters):
+        completion = self.client.chat.completions.create(
+            model=self.default_model,
+            messages=[
+                {"role": "system", "content": self.parameter_translation_instructions},
+                {"role": "user", "content": json.dumps(parameters)},
+            ],
+        )
+        response_translation = json.loads(completion.choices[0].message.content)
         return response_translation
