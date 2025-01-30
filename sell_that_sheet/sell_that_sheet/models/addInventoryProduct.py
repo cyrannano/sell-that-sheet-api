@@ -213,10 +213,10 @@ class AddInventoryProduct(BaseModel):
         features = {param.parameter.name: param.value_name for param in parameters}
 
         openai_service = OpenAiService()
+        translated_features = {}
         try:
             translated_features = openai_service.translate_parameters(features)
-            translated_features = {key + "|de": value for key, value in translated_features.items() if value}
-            features.update(translated_features)
+            translated_features = {key: value for key, value in translated_features.items() if value}
         except json.JSONDecodeError:
             print(f"Failed to decode JSON response for auction {auction.id}")
         except Exception as e:
@@ -255,6 +255,7 @@ class AddInventoryProduct(BaseModel):
                 "description_extra1": description_de,
                 "description_extra1|de": description_de,
                 "features": features,
+                "features|de": translated_features,
             },
             "images": photos,
             "stock": {

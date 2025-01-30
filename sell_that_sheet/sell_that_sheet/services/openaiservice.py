@@ -71,12 +71,14 @@ And here is an example of the JSON response:
 
 Input will be given in json and you should respond with json. Dont output anything else beside json with translated pairs.
 
+When parameter values are split using pipe "|" character, you should translate each value separately and join them with comma character.
+
 example input: 
 [
 "Strona zabudowy": "lewa",
 "Rodzaj świateł mijania": "Laserowe",
 "Jakość części (zgodnie z GVO)" : "Q - oryginał z logo producenta części (OEM, OES)",
-"Otwory": "dla haka holowniczego"
+"Otwory": "dla haka holowniczego | do czujnika parkowania",
 ]
 
 example output: 
@@ -84,7 +86,7 @@ example output:
 "Einbauposition": "Links",
 "Beleuchtungstechnik": "Laserlicht",
 "Teilequalität (gemäß GVO)" : "Q – Originalteil mit Logo des Teileherstellers (OEM, OES)",
-"Stoßstangenausschnitt": "Ausschnitt für Abschlepphaken"
+"Stoßstangenausschnitt": "Ausschnitt für Abschlepphaken, Ausschnitt für Parksensoren",
 ]
 """
 
