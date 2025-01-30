@@ -25,9 +25,9 @@ def get_translations(auction_parameter):
     auction_parameter_translation = AuctionParameterTranslation.objects.filter(auction_parameter=auction_parameter).first()
 
     return {
-       parameter_translation.translation: auction_parameter_translation.translation
-    } if parameter_translation and auction_parameter_translation else {}
-
+        "parameter_translation": parameter_translation.translation if parameter_translation else None,
+        "value_translation": auction_parameter_translation.translation if auction_parameter_translation else None
+    }
 
 def get_category_tags(category_id):
     cursor.execute("SELECT tags FROM category_tags WHERE category_id = ?", (category_id,))
@@ -168,6 +168,39 @@ def safe_cast_int(val):
     except:
         return ''
 
+def get_translated_features(auction):
+    """
+    Fetches translated auction parameters, leveraging both database translations and AI translations.
+    """
+    auction_parameters = AuctionParameter.objects.filter(auction=auction).select_related("parameter")
+
+    features = {param.parameter.name: param.value_name for param in auction_parameters}
+    translated_features = {}
+    to_translate = []
+
+    for param in auction_parameters:
+        translations = get_translations(param)
+        if translations["parameter_translation"] and translations["value_translation"]:
+            translated_features[translations["parameter_translation"]] = translations["value_translation"]
+        else:
+            to_translate.append(param)
+
+    # AI Translation
+    openai_service = OpenAiService()
+    try:
+        if to_translate:
+            ai_translations = openai_service.translate_parameters(
+                {param.parameter.name: param.value_name for param in to_translate}
+            )
+            translated_features.update(ai_translations)
+    except json.JSONDecodeError:
+        print(f"Failed to decode JSON response for auction {auction.id}")
+    except Exception as e:
+        print(f"Failed to translate parameters for auction {auction.id}: {e}")
+
+    return translated_features
+
+
 class AddInventoryProduct(BaseModel):
     inventory_id: str
     product_id: Optional[str] = None
@@ -224,25 +257,7 @@ class AddInventoryProduct(BaseModel):
         # Add parameters (features) from AuctionParameter
         parameters = AuctionParameter.objects.filter(auction=auction)
         features = {param.parameter.name: param.value_name for param in parameters}
-        translated_features = {}
-        to_translate = []
-
-        for param in parameters:
-            translations = get_translations(param)
-            if translations:
-                translated_features.update(translations)
-            else:
-                to_translate.append(param)
-
-        openai_service = OpenAiService()
-        try:
-            ai_translations = openai_service.translate_parameters({param.parameter.name: param.value_name for param in to_translate})
-            ai_translations = {key: value for key, value in translated_features.items() if value}
-            translated_features.update(ai_translations)
-        except json.JSONDecodeError:
-            print(f"Failed to decode JSON response for auction {auction.id}")
-        except Exception as e:
-            print(f"Failed to translate parameters for auction {auction.id}: {e}")
+        translated_features = get_translated_features(auction)
 
         # Add category specific fields
         features[get_category_part_number_field_name(auction.category)] = auction.serial_numbers
