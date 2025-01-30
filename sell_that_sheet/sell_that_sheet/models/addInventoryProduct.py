@@ -4,6 +4,7 @@ from typing import Dict, Optional, List, Union
 
 from numpy.ma.core import divide
 
+from . import ParameterTranslation, AuctionParameterTranslation
 from .parameter import AuctionParameter
 from django.conf import settings
 
@@ -15,6 +16,18 @@ import re
 
 conn = sqlite3.connect(settings.CUSTOM_PROPERTIES_DB_PATH, check_same_thread=False)
 cursor = conn.cursor()
+
+def get_translations(auction_parameter):
+    """
+    Retrieve translations for AuctionParameter's value_name and Parameter's name.
+    """
+    parameter_translation = ParameterTranslation.objects.filter(parameter=auction_parameter.parameter).first()
+    auction_parameter_translation = AuctionParameterTranslation.objects.filter(auction_parameter=auction_parameter).first()
+
+    return {
+       parameter_translation.translation: auction_parameter_translation.translation
+    } if parameter_translation and auction_parameter_translation else {}
+
 
 def get_category_tags(category_id):
     cursor.execute("SELECT tags FROM category_tags WHERE category_id = ?", (category_id,))
@@ -211,12 +224,21 @@ class AddInventoryProduct(BaseModel):
         # Add parameters (features) from AuctionParameter
         parameters = AuctionParameter.objects.filter(auction=auction)
         features = {param.parameter.name: param.value_name for param in parameters}
+        translated_features = {}
+        to_translate = []
+
+        for param in parameters:
+            translations = get_translations(param)
+            if translations:
+                translated_features.update(translations)
+            else:
+                to_translate.append(param)
 
         openai_service = OpenAiService()
-        translated_features = {}
         try:
-            translated_features = openai_service.translate_parameters(features)
-            translated_features = {key: value for key, value in translated_features.items() if value}
+            ai_translations = openai_service.translate_parameters({param.parameter.name: param.value_name for param in to_translate})
+            ai_translations = {key: value for key, value in translated_features.items() if value}
+            translated_features.update(ai_translations)
         except json.JSONDecodeError:
             print(f"Failed to decode JSON response for auction {auction.id}")
         except Exception as e:
