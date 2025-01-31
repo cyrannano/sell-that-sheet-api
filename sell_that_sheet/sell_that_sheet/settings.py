@@ -44,6 +44,7 @@ SWAGGER_SETTINGS = {
 # Application definition
 
 INSTALLED_APPS = [
+    "django_extensions",
     "corsheaders",
     "sell_that_sheet",
     "django.contrib.admin",
