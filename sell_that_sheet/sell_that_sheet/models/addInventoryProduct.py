@@ -20,9 +20,23 @@ cursor = conn.cursor()
 def get_translations(auction_parameter):
     """
     Retrieve translations for AuctionParameter's value_name and Parameter's name.
+    First, try to find a translation using allegro_id.
+    Then, search for the exact value_name inside the fetched queryset.
     """
-    parameter_translation = ParameterTranslation.objects.filter(parameter=auction_parameter.parameter).first()
-    auction_parameter_translation = AuctionParameterTranslation.objects.filter(auction_parameter=auction_parameter).first()
+    # Fetch translation for the parameter
+    parameter_translation = ParameterTranslation.objects.filter(
+        parameter=auction_parameter.parameter
+    ).first()
+
+    # Fetch all possible translations using allegro_id
+    auction_parameter_translations = AuctionParameterTranslation.objects.filter(
+        auction_parameter__parameter__allegro_id=auction_parameter.parameter.allegro_id
+    )
+
+    # Find the specific translation by matching value_name inside the queryset
+    auction_parameter_translation = auction_parameter_translations.filter(
+        auction_parameter__value_name=auction_parameter.value_name
+    ).first()
 
     return {
         "parameter_translation": parameter_translation.translation if parameter_translation else None,
@@ -174,16 +188,12 @@ def get_translated_features(auction):
     If a parameter name is translated but the value name is not, pass the translated name along with the original value name to OpenAI.
     """
     auction_parameters = AuctionParameter.objects.filter(auction=auction).select_related("parameter")
-
     translated_features = {}
     to_translate = {}
-
     for param in auction_parameters:
         translations = get_translations(param)
-
         parameter_translation = translations["parameter_translation"]
         value_translation = translations["value_translation"]
-
         if parameter_translation and value_translation:
             # Both the parameter and value are translated, add them directly
             translated_features[parameter_translation] = value_translation
