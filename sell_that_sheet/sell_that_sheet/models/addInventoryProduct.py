@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.db import models
 import os
 from typing import Dict, Optional, List, Union
@@ -182,13 +184,54 @@ def safe_cast_int(val):
     except:
         return ''
 
+
+def translate_bolt_pattern(param):
+    values = param.value_name.split('x')
+    return {
+        "Lochzahl": f'{values[0]} mm',
+        "Lochkreis": f'{values[1]} mm',
+    }
+
+def translate_offset(param):
+    return {"Einpresstiefe (ET)": f'{param.value_name} mm'}
+
+def translate_rim_diameter(param):
+    return {"Zollgröße": param.value_name.replace('"','')}
+
+def translate_rim_width(param):
+    return {"Felgenbreite": param.value_name.replace('"', '')}
+
+CUSTOM_TRANSLATIONS = defaultdict(lambda: lambda _: {})
+
+CUSTOM_TRANSLATIONS.update({
+    "Rozstaw śrub": translate_bolt_pattern,
+    "Odsadzenie (ET)": translate_offset,
+    "Średnica felgi": translate_rim_diameter,
+    "Szerokość felgi": translate_rim_width,
+})
+
+def add_custom_translations(auction_parameters):
+    tmp_dict = {}
+    for param in auction_parameters:
+        try:
+            tmp_dict.update(CUSTOM_TRANSLATIONS[param.parameter.name](param))
+        except:
+            continue
+    return tmp_dict
+
 def get_translated_features(auction):
     """
     Fetches translated auction parameters, leveraging both database translations and AI translations.
     If a parameter name is translated but the value name is not, pass the translated name along with the original value name to OpenAI.
     """
     auction_parameters = AuctionParameter.objects.filter(auction=auction).select_related("parameter")
-    translated_features = {}
+
+    translated_features = add_custom_translations(auction_parameters)
+
+    # filter out custom translations
+    auction_parameters = filter(lambda x: x.parameter.name in list(CUSTOM_TRANSLATIONS.keys()), auction_parameters)
+    auction_parameters = list(auction_parameters)
+
     to_translate = {}
     for param in auction_parameters:
         translations = get_translations(param)
