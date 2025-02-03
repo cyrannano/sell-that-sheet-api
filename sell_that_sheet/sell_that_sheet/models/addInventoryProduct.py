@@ -196,10 +196,10 @@ def translate_offset(param):
     return {"Einpresstiefe (ET)": f'{param.value_name} mm'}
 
 def translate_rim_diameter(param):
-    return {"Zollgröße": param.value_name.replace('"','')}
+    return {"Zollgröße": param.value_name.replace('"','').replace(".", ",")}
 
 def translate_rim_width(param):
-    return {"Felgenbreite": param.value_name.replace('"', '')}
+    return {"Felgenbreite": param.value_name.replace('"', '').replace(".", ",")}
 
 CUSTOM_TRANSLATIONS = defaultdict(lambda: lambda _: {})
 
