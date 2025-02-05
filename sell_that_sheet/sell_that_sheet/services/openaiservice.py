@@ -71,7 +71,7 @@ And here is an example of the JSON response:
 
 Input will be given in json and you should respond with json. Dont output anything else beside json with translated pairs.
 
-When parameter values are split using pipe "|" character, you should translate each value separately and join them with comma character.
+When parameter values are split using pipe "|" character, you should translate each value separately and join them with comma character. Except for the parameters describing side/position like Einbauposition/Strona zabudowy, where you should translate each value separately and join them with comma character.
 
 If something is already translated and seems correct, leave it as it is.
 
