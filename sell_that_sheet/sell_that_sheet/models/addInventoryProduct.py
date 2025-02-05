@@ -219,11 +219,14 @@ def add_custom_translations(auction_parameters):
             continue
     return tmp_dict
 
-def get_translated_features(auction):
+def get_translated_features(auction, to_translate=None):
     """
     Fetches translated auction parameters, leveraging both database translations and AI translations.
     If a parameter name is translated but the value name is not, pass the translated name along with the original value name to OpenAI.
     """
+    if to_translate is None:
+        to_translate = dict()
+
     auction_parameters = AuctionParameter.objects.filter(auction=auction).select_related("parameter")
 
     translated_features = add_custom_translations(auction_parameters)
@@ -232,7 +235,6 @@ def get_translated_features(auction):
     auction_parameters = filter(lambda x: x.parameter.name in list(CUSTOM_TRANSLATIONS.keys()), auction_parameters)
     auction_parameters = list(auction_parameters)
 
-    to_translate = {}
     for param in auction_parameters:
         translations = get_translations(param)
         parameter_translation = translations["parameter_translation"]
@@ -318,13 +320,15 @@ class AddInventoryProduct(BaseModel):
         # Add parameters (features) from AuctionParameter
         parameters = AuctionParameter.objects.filter(auction=auction)
         features = {param.parameter.name: param.value_name for param in parameters}
-        translated_features = get_translated_features(auction)
 
         # Add category specific fields
         features[get_category_part_number_field_name(auction.category)] = auction.serial_numbers
         features[get_category_tags_field_name(auction.category)] = divideString(remove_duplicates(auction.tags).upper())
         features[get_category_auto_tags_field_name(auction.category)] = prepare_tags(auction.category, auction.name, auction.tags)
 
+        translated_features = get_translated_features(auction, {
+            "Vergleichsnummer": features[get_category_auto_tags_field_name(auction.category)].replace("|", ",")
+        })
 
         sku_code = f"{owner.username[0].upper()} {author.username.upper()[:3]} SP_{safe_cast_int(auction.shipment_price)} {safe_cast_int(price_euro)} {photoset.thumbnail.name.split('.')[0]} {photoset.directory_location}"
 
@@ -336,7 +340,6 @@ class AddInventoryProduct(BaseModel):
 
         translated_features["Herstellernummer"] = auction.serial_numbers.replace("|", ",")
         translated_features["OE/OEM Referenznummer(n)"] = features[get_category_tags_field_name(auction.category)].replace("|", ",")
-        translated_features["Vergleichsnummer"] = features[get_category_auto_tags_field_name(auction.category)].replace("|", ",")
 
         # Create product dictionary
         product_data = {
