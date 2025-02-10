@@ -306,7 +306,7 @@ class AddInventoryProduct(BaseModel):
                 if not description_de:
                     description_de = translation.get("description", "")
                 if not product_name_de:
-                    product_name_de = translation.get("name", "")
+                    product_name_de = translation.get("title", "")
             except Exception as e:
                 print(f"Failed to translate auction {auction.id}: {e}")
 
