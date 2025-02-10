@@ -327,7 +327,7 @@ class AddInventoryProduct(BaseModel):
         features[get_category_auto_tags_field_name(auction.category)] = prepare_tags(auction.category, auction.name, auction.tags)
 
         translated_features = get_translated_features(auction, {
-            "Vergleichsnummer": features[get_category_auto_tags_field_name(auction.category)].replace("|", ",")
+            "Vergleichsnummer": features[get_category_auto_tags_field_name(auction.category)]
         })
 
         sku_code = f"{owner.username[0].upper()} {author.username.upper()[:3]} SP_{safe_cast_int(auction.shipment_price)} {safe_cast_int(price_euro)} {photoset.thumbnail.name.split('.')[0]} {photoset.directory_location}"
