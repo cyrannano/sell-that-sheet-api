@@ -73,6 +73,8 @@ Input will be given in json and you should respond with json. Dont output anythi
 
 When parameter values are split using pipe "|" character, you should translate each value separately and join them with comma character. Except for the parameters describing: Vergleichsnummer, Stoßstangenausschnitt and Einbauposition where you should translate each value separately and join them with pipe character.
 
+When there are standalone numbers in the parameter value, you should translate them as they are. Leave them as they are.
+
 If something is already translated and seems correct, leave it as it is.
 
 example input: 

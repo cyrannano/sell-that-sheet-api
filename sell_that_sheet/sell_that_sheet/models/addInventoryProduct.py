@@ -188,7 +188,7 @@ def safe_cast_int(val):
 def translate_bolt_pattern(param):
     values = param.value_name.split('x')
     return {
-        "Lochzahl": f'{values[0]} mm',
+        "Lochzahl": f'{values[0]}',
         "Lochkreis": f'{values[1]} mm',
     }
 
