@@ -91,7 +91,7 @@ example output:
 "Einbauposition": "Links",
 "Beleuchtungstechnik": "Laserlicht",
 "Teilequalität (gemäß GVO)" : "Q – Originalteil mit Logo des Teileherstellers (OEM, OES)",
-"Stoßstangenausschnitt": "Ausschnitt für Abschlepphaken| Ausschnitt für Parksensoren",
+"Stoßstangenausschnitt": "Ausschnitt für Abschlepphaken | Ausschnitt für Parksensoren",
 "OE/OEM Referenznummer(n)": "123456, 789012",
 ]
 """
