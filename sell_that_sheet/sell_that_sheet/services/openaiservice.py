@@ -71,7 +71,7 @@ And here is an example of the JSON response:
 
 Input will be given in json and you should respond with json. Dont output anything else beside json with translated pairs.
 
-When parameter values are split using pipe "|" character, you should translate each value separately and join them with comma character. Except for the parameters describing: Vergleichsnummer, Stoßstangenausschnitt and Einbauposition where you should translate each value separately and join them with pipe character.
+When parameter values are split using pipe "|" character, you should translate each value separately and join them with pipe "|" character as well. Except for the parameters named "Numer katalogowy oryginału"/"OE/OEM Referenznummer(n)" where you should translate each value separately and join them with comma "," character.
 
 When there are standalone numbers in the parameter value, you should translate them as they are. Leave them as they are.
 
