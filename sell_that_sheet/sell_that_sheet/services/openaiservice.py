@@ -83,6 +83,7 @@ example input:
 "Rodzaj świateł mijania": "Laserowe",
 "Jakość części (zgodnie z GVO)" : "Q - oryginał z logo producenta części (OEM, OES)",
 "Otwory": "dla haka holowniczego | do czujnika parkowania",
+"Numer katalogowy oryginału": "123456 | 789012",
 ]
 
 example output: 
@@ -90,7 +91,8 @@ example output:
 "Einbauposition": "Links",
 "Beleuchtungstechnik": "Laserlicht",
 "Teilequalität (gemäß GVO)" : "Q – Originalteil mit Logo des Teileherstellers (OEM, OES)",
-"Stoßstangenausschnitt": "Ausschnitt für Abschlepphaken, Ausschnitt für Parksensoren",
+"Stoßstangenausschnitt": "Ausschnitt für Abschlepphaken| Ausschnitt für Parksensoren",
+"OE/OEM Referenznummer(n)": "123456, 789012",
 ]
 """
 
