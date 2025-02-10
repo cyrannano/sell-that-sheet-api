@@ -338,7 +338,7 @@ class AddInventoryProduct(BaseModel):
         manufacturer_parameter = filter(lambda x: "PRODUCENT" in x.parameter.name.upper() or "MARKA" in x.parameter.name.upper(), parameters).__next__()
         manufacturer = match_manufacturer(manufacturer_parameter.value_name)
 
-        translated_features["Herstellernummer"] = auction.serial_numbers.replace("|", ",")
+        translated_features["Herstellernummer"] = auction.serial_numbers
         translated_features["OE/OEM Referenznummer(n)"] = features[get_category_tags_field_name(auction.category)].replace("|", ",")
 
         # Create product dictionary
