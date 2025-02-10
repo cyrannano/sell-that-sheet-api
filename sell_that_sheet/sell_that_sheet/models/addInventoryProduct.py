@@ -299,12 +299,14 @@ class AddInventoryProduct(BaseModel):
         description = auction.description if auction.description else ""
         description_de = auction.translated_params.get("de", {}).get("description", "") if auction.translated_params else ""
 
-        if not description_de or product_name_de:
+        if not description_de or not product_name_de:
             openai_service = OpenAiService()
             try:
                 translation = openai_service.translate_completion(title=product_name, description=description, category=auction.category)
-                description_de = translation.get("description", "")
-                product_name_de = translation.get("name", "")
+                if not description_de:
+                    description_de = translation.get("description", "")
+                if not product_name_de:
+                    product_name_de = translation.get("name", "")
             except Exception as e:
                 print(f"Failed to translate auction {auction.id}: {e}")
 
