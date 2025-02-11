@@ -209,12 +209,20 @@ class DistinctAuctionParameterView(APIView):
     by (parameter, value_name, value_id, auction).
     """
     def get(self, request, *args, **kwargs):
-        distinct_auction_params = (
-            AuctionParameter.objects
-                            .values("parameter", "value_name", "value_id")
-                            .distinct()
-        )
-        return Response(distinct_auction_params, status=status.HTTP_200_OK)
+        qs = AuctionParameter.objects.values("parameter", "value_name", "value_id").distinct()
+        exploded_results = []
+        for item in qs:
+            # Split the value_name on '|'
+            for part in item["value_name"].split("|"):
+                new_item = item.copy()
+                new_item["value_name"] = part.strip()  # .strip() if you want to remove extra spaces
+                new_item['value_id'] = None
+                exploded_results.append(new_item)
+
+        exploded_results = set([tuple(sorted(item.items())) for item in exploded_results])
+        exploded_results = [dict(item) for item in exploded_results]
+
+        return Response(exploded_results, status=status.HTTP_200_OK)
 
 
 class SaveTranslationsView(APIView):
