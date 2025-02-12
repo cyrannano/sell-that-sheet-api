@@ -19,6 +19,8 @@ import re
 conn = sqlite3.connect(settings.CUSTOM_PROPERTIES_DB_PATH, check_same_thread=False)
 cursor = conn.cursor()
 
+PARAMETER_SEPARATOR = "|"
+
 def get_translations(auction_parameter):
     """
     Retrieve translations for AuctionParameter's value_name and Parameter's name.
@@ -35,14 +37,24 @@ def get_translations(auction_parameter):
         auction_parameter__parameter__allegro_id=auction_parameter.parameter.allegro_id
     )
 
-    # Find the specific translation by matching value_name inside the queryset
-    auction_parameter_translation = auction_parameter_translations.filter(
-        auction_parameter__value_name=auction_parameter.value_name
-    ).first()
+    values = []
+    if PARAMETER_SEPARATOR in auction_parameter.value_name:
+        values = auction_parameter.value_name.split(PARAMETER_SEPARATOR)
+    else:
+        values.append(auction_parameter.value_name)
+
+    translated_values = []
+
+    for value in values:
+        # Find the specific translation by matching value_name inside the queryset
+        auction_parameter_translation = auction_parameter_translations.filter(
+            auction_parameter__value_name=value
+        ).first()
+        translated_values.append(auction_parameter_translation.translation if auction_parameter_translation else None)
 
     return {
         "parameter_translation": parameter_translation.translation if parameter_translation else None,
-        "value_translation": auction_parameter_translation.translation if auction_parameter_translation else None
+        "value_translation": PARAMETER_SEPARATOR.join(translated_values) if None not in translated_values else None,
     }
 
 def get_category_tags(category_id):
