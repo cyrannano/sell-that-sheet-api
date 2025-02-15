@@ -338,7 +338,7 @@ class AddInventoryProduct(BaseModel):
         # add thumbnail to the first position
         photos.insert(0, os.path.join(settings.MEDIA_ROOT, photoset.directory_location, thumbnail.name))
 
-        photos = parse_photos(photos)
+        photos = parse_photos(photos, settings.PHOTOSET_MAX_PHOTOS)
         photos = limit_photo_size(photos)
         photos = {i: photo for i, photo in enumerate(photos)}
         # Add parameters (features) from AuctionParameter
