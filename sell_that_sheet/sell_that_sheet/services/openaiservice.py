@@ -141,7 +141,7 @@ example output:
             model=self.default_model,
             messages=[
                 {"role": "system", "content": self.parameter_translation_instructions},
-                {"role": "user", "content": json.dumps(parameters)},
+                {"role": "user", "content": json.dumps(parameters).lower()},
             ],
         )
         response_translation = json.loads(completion.choices[0].message.content)
