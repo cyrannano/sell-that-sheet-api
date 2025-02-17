@@ -381,6 +381,7 @@ class AddInventoryProduct(BaseModel):
                 "description": description,
                 "description_extra1": description_de,
                 "description_extra1|de": description_de,
+                "description_extra4": description,
                 "features": features,
                 "features|de": translated_features,
             },
