@@ -47,6 +47,8 @@ router.register(r"auctionparameters", AuctionParameterViewSet)
 router.register(r"parameters", ParameterViewSet)
 router.register(r"descriptiontemplate", DescriptionTemplateViewSet)
 router.register(r"keywordtranslation", KeywordTranslationViewSet)
+router.register(r'translationexample', TranslationExampleViewSet)
+
 # router.register(r'keyword-translation', KeywordTranslationViewSet, basename='keyword-translation')
 
 
@@ -81,7 +83,6 @@ urlpatterns = [
         "api/browse/<path:path>", DirectoryBrowseView.as_view(), name="directory-browse"
     ),
     path("api/translations/", ListTranslationsView.as_view(), name="list_translations"),
-    path("api/translation-examples/", TranslationExampleViewSet, basename="translation-example"),
     path("api/translations/save/", SaveTranslationsView.as_view(), name="save_translations"),
     path('keyword-translation/search/', KeywordTranslationSearchView.as_view(), name='keyword-translation-search'),
     path("api/login/", LoginView.as_view(), name="login"),
