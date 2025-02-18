@@ -37,7 +37,7 @@ def calculate_price_euro(price, weight, er=4):
     Calculate the price in euro given other currency and exchange rate
     """
     weight_price = WEIGHT_TO_SHIPMENT_PRICE.get(weight, 100)
-    base_price = price/er + weight_price
+    base_price = float(price)/er + weight_price
     base_price *= 1.2
     return ceil_to_tens(base_price)
 
