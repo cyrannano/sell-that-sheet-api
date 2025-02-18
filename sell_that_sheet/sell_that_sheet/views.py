@@ -849,9 +849,6 @@ class TranslationExampleViewSet(viewsets.ModelViewSet):
     search_fields = ['source_text', 'target_text']
 
     def get_queryset(self):
-        """
-        Optionally filters translations by source & target language.
-        """
         queryset = super().get_queryset()
         source_lang = self.request.query_params.get("source_language")
         target_lang = self.request.query_params.get("target_language")
