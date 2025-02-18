@@ -4,6 +4,7 @@ import os
 import json
 
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
 from django.conf import settings
 from django.db.models import F
 
@@ -15,7 +16,7 @@ from rest_framework.response import Response
 from unicodedata import category
 
 from .models import Auction, PhotoSet, Photo, AuctionSet, AuctionParameter, Parameter, AllegroAuthToken, \
-    DescriptionTemplate, KeywordTranslation, ParameterTranslation, AuctionParameterTranslation
+    DescriptionTemplate, KeywordTranslation, ParameterTranslation, AuctionParameterTranslation, TranslationExample
 from django.db.models import Q
 
 from .models.addInventoryProduct import prepare_tags
@@ -38,6 +39,7 @@ from .serializers import (
     KeywordTranslationSerializer,
     ParameterTranslationSerializer,
     AuctionParameterTranslationSerializer,
+    TranslationExampleSerializer,
 )
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
@@ -837,3 +839,24 @@ class ImageRotateView(APIView):
         rotated_image_path = apply_rotation_to_image(image_full_path, angle)
 
         return Response({'rotated_image_path': rotated_image_path}, status=status.HTTP_200_OK)
+
+class TranslationExampleViewSet(viewsets.ModelViewSet):
+    queryset = TranslationExample.objects.all().order_by('-created_at')
+    serializer_class = TranslationExampleSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ['source_language', 'target_language']
+    search_fields = ['source_text', 'target_text']
+
+    def get_queryset(self):
+        """
+        Optionally filters translations by source & target language.
+        """
+        queryset = super().get_queryset()
+        source_lang = self.request.query_params.get("source_language")
+        target_lang = self.request.query_params.get("target_language")
+
+        if source_lang and target_lang:
+            queryset = queryset.filter(source_language=source_lang, target_language=target_lang)
+
+        return queryset

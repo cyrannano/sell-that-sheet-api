@@ -1,6 +1,8 @@
 from django.urls import path, include
 from django.contrib import admin
 from rest_framework.routers import DefaultRouter
+
+from .models import TranslationExample
 from .views import (
     AuctionViewSet,
     PhotoSetViewSet,
@@ -29,6 +31,7 @@ from .views import (
     ImageRotateView,
     DistinctAuctionParameterView,
     DistinctParameterView, SaveTranslationsView, ListTranslationsView,
+    TranslationExampleViewSet,
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -78,6 +81,7 @@ urlpatterns = [
         "api/browse/<path:path>", DirectoryBrowseView.as_view(), name="directory-browse"
     ),
     path("api/translations/", ListTranslationsView.as_view(), name="list_translations"),
+    path("api/translation-examples/", TranslationExampleViewSet, basename="translation-example"),
     path("api/translations/save/", SaveTranslationsView.as_view(), name="save_translations"),
     path('keyword-translation/search/', KeywordTranslationSearchView.as_view(), name='keyword-translation-search'),
     path("api/login/", LoginView.as_view(), name="login"),

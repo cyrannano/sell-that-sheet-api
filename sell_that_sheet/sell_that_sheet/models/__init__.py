@@ -9,3 +9,4 @@ from .addInventoryProduct import AddInventoryProduct, AddInventoryProductRespons
 from .decription_template import DescriptionTemplate
 from .keyword_translation import KeywordTranslation
 from .translations import ParameterTranslation, AuctionParameterTranslation
+from .translation_example import TranslationExample
