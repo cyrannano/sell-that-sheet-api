@@ -1,3 +1,4 @@
+import math
 from collections import defaultdict
 
 from django.db import models
@@ -20,6 +21,27 @@ conn = sqlite3.connect(settings.CUSTOM_PROPERTIES_DB_PATH, check_same_thread=Fal
 cursor = conn.cursor()
 
 PARAMETER_SEPARATOR = "|"
+
+WEIGHT_TO_SHIPMENT_PRICE = {
+    200: 100,
+    150: 70,
+    40: 50,
+    15: 10
+}
+
+def ceil_to_tens(n):
+    return math.ceil(n / 10) * 10
+
+def calculate_price_euro(price, weight, er=4):
+    """
+    Calculate the price in euro given other currency and exchange rate
+    """
+    weight_price = WEIGHT_TO_SHIPMENT_PRICE.get(weight, 100)
+    base_price = price/er + weight_price
+    base_price *= 1.2
+    return ceil_to_tens(base_price)
+
+assert calculate_price_euro(1000, 200) == 420
 
 def get_translations(auction_parameter):
     """
@@ -393,6 +415,8 @@ class AddInventoryProduct(BaseModel):
 
         if price_euro and price_euro > 0:
             product_data["prices"]["4848"] = float(price_euro)
+        else:
+            product_data["prices"]["4848"] = calculate_price_euro(auction.price_pln, map_shipment_to_weight(auction.shipment_price))
 
         return cls(**product_data)
 
