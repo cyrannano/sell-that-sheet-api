@@ -845,10 +845,11 @@ class TranslationExampleViewSet(viewsets.ModelViewSet):
     serializer_class = TranslationExampleSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ['source_language', 'target_language']
+    filterset_fields = ['source_language', 'target_language', 'category_id']
     search_fields = ['source_text', 'target_text']
 
-    def get_queryset(self):
+
+def get_queryset(self):
         queryset = super().get_queryset()
         source_lang = self.request.query_params.get("source_language")
         target_lang = self.request.query_params.get("target_language")
