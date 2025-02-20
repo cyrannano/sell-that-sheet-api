@@ -846,7 +846,7 @@ class TranslationExampleViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ['source_language', 'target_language', 'category_id']
-    search_fields = ['source_text', 'target_text']
+    search_fields = ['source_text', 'target_text', 'description']
 
 
 def get_queryset(self):

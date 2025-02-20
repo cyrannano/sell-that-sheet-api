@@ -5,7 +5,8 @@ class TranslationExample(models.Model):
     target_language = models.CharField(max_length=10)  # e.g., "de"
     source_text = models.TextField()
     target_text = models.TextField()
-    category_id = models.PositiveIntegerField()  # Numeric category ID
+    category_id = models.PositiveIntegerField(null=True, blank=True)  # Now nullable
+    description = models.TextField(null=True, blank=True)  # New field to describe translation focus
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
