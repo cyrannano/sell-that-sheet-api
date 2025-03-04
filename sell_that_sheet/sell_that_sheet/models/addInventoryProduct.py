@@ -397,6 +397,7 @@ class AddInventoryProduct(BaseModel):
             "category_id": category,
             "star": int(star),
             "manufacturer_id": manufacturer,
+            "tax_rate": 23.00,
             "text_fields": {
                 "name": product_name,
                 "name|de": product_name_de,
