@@ -16,7 +16,8 @@ from rest_framework.response import Response
 from unicodedata import category
 
 from .models import Auction, PhotoSet, Photo, AuctionSet, AuctionParameter, Parameter, AllegroAuthToken, \
-    DescriptionTemplate, KeywordTranslation, ParameterTranslation, AuctionParameterTranslation, TranslationExample
+    DescriptionTemplate, KeywordTranslation, ParameterTranslation, AuctionParameterTranslation, TranslationExample, \
+    Tag
 from django.db.models import Q
 
 from .models.addInventoryProduct import prepare_tags
@@ -34,6 +35,7 @@ from .serializers import (
     PhotoSerializer,
     AuctionSetSerializer,
     AuctionParameterSerializer,
+    TagSerializer,
     ParameterSerializer,
     DescriptionTemplateSerializer,
     KeywordTranslationSerializer,
@@ -858,3 +860,33 @@ def get_queryset(self):
             queryset = queryset.filter(source_language=source_lang, target_language=target_lang)
 
         return queryset
+
+
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+
+    def create(self, request, *args, **kwargs):
+        key = request.data.get('key', '').strip()
+        value = request.data.get('value', '').strip()
+
+        if not key or not value:
+            return Response({'error': 'Both key and value are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        tag, created = Tag.objects.get_or_create(key=key, defaults={'value': value})
+
+        if not created:
+            return Response({'error': 'Tag already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(TagSerializer(tag).data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        tag = self.get_object()
+        tag.value = request.data.get('value', tag.value)
+        tag.save()
+        return Response(TagSerializer(tag).data)
+
+    def destroy(self, request, *args, **kwargs):
+        tag = self.get_object()
+        tag.delete()
+        return Response({'message': 'Tag deleted successfully'}, status=status.HTTP_204_NO_CONTENT)

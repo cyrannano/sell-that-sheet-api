@@ -7,3 +7,4 @@ from .description_template import DescriptionTemplateSerializer
 from .keyword_translation import KeywordTranslationSerializer
 from .translations import  ParameterTranslationSerializer, AuctionParameterTranslationSerializer
 from .translation_example import TranslationExampleSerializer
+from .tag import TagSerializer
