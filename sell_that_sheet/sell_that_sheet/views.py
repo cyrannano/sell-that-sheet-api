@@ -17,7 +17,7 @@ from unicodedata import category
 
 from .models import Auction, PhotoSet, Photo, AuctionSet, AuctionParameter, Parameter, AllegroAuthToken, \
     DescriptionTemplate, KeywordTranslation, ParameterTranslation, AuctionParameterTranslation, TranslationExample, \
-    Tag
+    Tag, CategoryTag
 from django.db.models import Q
 
 from .models.addInventoryProduct import prepare_tags
@@ -41,7 +41,7 @@ from .serializers import (
     KeywordTranslationSerializer,
     ParameterTranslationSerializer,
     AuctionParameterTranslationSerializer,
-    TranslationExampleSerializer,
+    TranslationExampleSerializer, CategoryTagSerializer,
 )
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
@@ -904,3 +904,44 @@ class TagViewSet(viewsets.ModelViewSet):
         except Tag.DoesNotExist:
             return Response({'error': 'Tag not found in this language'}, status=status.HTTP_404_NOT_FOUND)
 
+class CategoryTagViewSet(viewsets.ModelViewSet):
+    queryset = CategoryTag.objects.all()
+    serializer_class = CategoryTagSerializer
+
+    def get_queryset(self):
+        language = self.request.query_params.get('language', 'pl')  # Default to Polish
+        return CategoryTag.objects.filter(language=language)
+
+    def create(self, request, *args, **kwargs):
+        category_id = request.data.get('category_id')
+        tags = request.data.get('tags', '').strip()
+        language = request.data.get('language', 'pl').strip()
+
+        if not category_id or not tags:
+            return Response({'error': 'Category ID and tags are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        category_tag, created = CategoryTag.objects.get_or_create(
+            category_id=category_id, language=language, defaults={'tags': tags}
+        )
+
+        if not created:
+            return Response({'error': 'Category already exists in this language.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(CategoryTagSerializer(category_tag).data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        category_tag = self.get_object()
+        category_tag.tags = request.data.get('tags', category_tag.tags)
+        category_tag.save()
+        return Response(CategoryTagSerializer(category_tag).data)
+
+    def destroy(self, request, *args, **kwargs):
+        tag_id = kwargs.get('pk')
+        language = request.query_params.get('language', 'pl')
+
+        try:
+            category_tag = CategoryTag.objects.get(id=tag_id, language=language)
+            category_tag.delete()
+            return Response({'message': 'Category tag deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        except CategoryTag.DoesNotExist:
+            return Response({'error': 'Category tag not found in this language'}, status=status.HTTP_404_NOT_FOUND)

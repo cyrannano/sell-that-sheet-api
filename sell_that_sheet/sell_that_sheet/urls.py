@@ -31,7 +31,7 @@ from .views import (
     ImageRotateView,
     DistinctAuctionParameterView,
     DistinctParameterView, SaveTranslationsView, ListTranslationsView,
-    TranslationExampleViewSet, TagViewSet,
+    TranslationExampleViewSet, TagViewSet, CategoryTagViewSet,
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -49,6 +49,7 @@ router.register(r"descriptiontemplate", DescriptionTemplateViewSet)
 router.register(r"keywordtranslation", KeywordTranslationViewSet)
 router.register(r'translationexample', TranslationExampleViewSet)
 router.register(r'tags', TagViewSet, basename='tag')
+router.register(r'category-tags', CategoryTagViewSet, basename='categorytag')
 
 # router.register(r'keyword-translation', KeywordTranslationViewSet, basename='keyword-translation')
 
