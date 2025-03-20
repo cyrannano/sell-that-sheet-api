@@ -894,6 +894,13 @@ class TagViewSet(viewsets.ModelViewSet):
         return Response(TagSerializer(tag).data)
 
     def destroy(self, request, *args, **kwargs):
-        tag = self.get_object()
-        tag.delete()
-        return Response({'message': 'Tag deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        tag_id = kwargs.get('pk')  # Get the tag ID from the request
+        language = request.query_params.get('language', 'pl')  # Default to Polish
+
+        try:
+            tag = Tag.objects.get(id=tag_id, language=language)  # Filter by language
+            tag.delete()
+            return Response({'message': 'Tag deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        except Tag.DoesNotExist:
+            return Response({'error': 'Tag not found in this language'}, status=status.HTTP_404_NOT_FOUND)
+
