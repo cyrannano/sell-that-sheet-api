@@ -866,17 +866,24 @@ class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
+    def get_queryset(self):
+        language = self.request.query_params.get('language', 'pl')  # Default to Polish
+        return Tag.objects.filter(language=language)
+
     def create(self, request, *args, **kwargs):
         key = request.data.get('key', '').strip()
         value = request.data.get('value', '').strip()
+        language = request.data.get('language', 'pl').strip()
 
         if not key or not value:
-            return Response({'error': 'Both key and value are required.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Key and value are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        tag, created = Tag.objects.get_or_create(key=key, defaults={'value': value})
+        tag, created = Tag.objects.get_or_create(
+            key=key, language=language, defaults={'value': value}
+        )
 
         if not created:
-            return Response({'error': 'Tag already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Tag already exists in this language.'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(TagSerializer(tag).data, status=status.HTTP_201_CREATED)
 
