@@ -135,6 +135,9 @@ example output:
         translation_examples_description = [{"source_text": source_text, "target_text": target_text, "description (why translated this way)": description} for source_text, target_text, description in translation_examples_description]
 
         instructions = self.instructions.format(translation_dictionary=json.dumps(translation_dictionary, indent=2), translation_examples_description=json.dumps(translation_examples_description, indent=2))
+
+        print(f"Instructions: {instructions}")
+
         completion = self.client.chat.completions.create(
             model=self.default_model,
             messages=[
