@@ -3,6 +3,8 @@ import json
 from django.conf import settings
 from django.db.models import Q
 from openai import OpenAI
+
+from ..models import TranslationExample
 from ..models.keyword_translation import KeywordTranslation
 
 class OpenAiService:
@@ -37,6 +39,10 @@ While translating, consider the following common terms used in German auctions f
 - Maintain the structural layout found in typical auction listings to ensure consistency and understandability in the intended market.
 - Make sure the capitalization and punctuation are accurate in the translated content. You can assume the input might be incorrect in terms of capitalization and punctuation.
 - Make sure to use the translation dictionary provided to ensure consistency with the terms used in the German auction market.
+
+# Examples with additional info
+Below are a few examples of translated text along with explanation of why this text was translated this way:
+{translation_examples_description} 
 
 Response in JSON format. Below is a JSON SCHEMA for the response:
 {{
@@ -125,7 +131,10 @@ example output:
         translation_dictionary = KeywordTranslation.objects.filter(Q(category=category) | Q(shared_across_categories=True)).values_list('original', 'translated')
         translation_dictionary = {original.lower(): translation.lower() for original, translation in translation_dictionary}
 
-        instructions = self.instructions.format(translation_dictionary=json.dumps(translation_dictionary, indent=2))
+        translation_examples_description = TranslationExample.objects.filter(Q(source_language='pl') & Q(target_language='de') & (Q(category=category) | Q(category=None))).values_list('source_text', 'target_text', 'description')
+        translation_examples_description = [{"source_text": source_text, "target_text": target_text, "description (why translated this way)": description} for source_text, target_text, description in translation_examples_description]
+
+        instructions = self.instructions.format(translation_dictionary=json.dumps(translation_dictionary, indent=2), translation_examples_description=json.dumps(translation_examples_description, indent=2))
         completion = self.client.chat.completions.create(
             model=self.default_model,
             messages=[
