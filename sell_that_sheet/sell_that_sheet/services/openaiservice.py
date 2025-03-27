@@ -131,7 +131,7 @@ example output:
         translation_dictionary = KeywordTranslation.objects.filter(Q(category=category) | Q(shared_across_categories=True)).values_list('original', 'translated')
         translation_dictionary = {original.lower(): translation.lower() for original, translation in translation_dictionary}
 
-        translation_examples_description = TranslationExample.objects.filter(Q(source_language='pl') & Q(target_language='de') & (Q(category=category) | Q(category=None))).values_list('source_text', 'target_text', 'description')
+        translation_examples_description = TranslationExample.objects.filter(Q(source_language='pl') & Q(target_language='de') & (Q(category_id=category) | Q(category_id=None))).values_list('source_text', 'target_text', 'description')
         translation_examples_description = [{"source_text": source_text, "target_text": target_text, "description (why translated this way)": description} for source_text, target_text, description in translation_examples_description]
 
         instructions = self.instructions.format(translation_dictionary=json.dumps(translation_dictionary, indent=2), translation_examples_description=json.dumps(translation_examples_description, indent=2))
