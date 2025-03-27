@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db.models import Q
 from openai import OpenAI
 
-from ..models import TranslationExample
+from ..models.translation_example import TranslationExample
 from ..models.keyword_translation import KeywordTranslation
 
 class OpenAiService:
