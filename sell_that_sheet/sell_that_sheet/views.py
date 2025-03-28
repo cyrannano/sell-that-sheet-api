@@ -888,10 +888,16 @@ class TagViewSet(viewsets.ModelViewSet):
         return Response(TagSerializer(tag).data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
-        tag = self.get_object()
-        tag.value = request.data.get('value', tag.value)
-        tag.save()
-        return Response(TagSerializer(tag).data)
+        tag_id = kwargs.get('pk')
+        language = request.query_params.get('language', 'pl')
+
+        try:
+            tag = Tag.objects.get(id=tag_id, language=language)
+            tag.value = request.data.get('value', tag.value)
+            tag.save()
+            return Response(TagSerializer(tag).data)
+        except Tag.DoesNotExist:
+            return Response({'error': 'Tag not found in this language'}, status=status.HTTP_404_NOT_FOUND)
 
     def destroy(self, request, *args, **kwargs):
         tag_id = kwargs.get('pk')  # Get the tag ID from the request
@@ -930,10 +936,16 @@ class CategoryTagViewSet(viewsets.ModelViewSet):
         return Response(CategoryTagSerializer(category_tag).data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
-        category_tag = self.get_object()
-        category_tag.tags = request.data.get('tags', category_tag.tags)
-        category_tag.save()
-        return Response(CategoryTagSerializer(category_tag).data)
+        tag_id = kwargs.get('pk')
+        language = request.query_params.get('language', 'pl')
+
+        try:
+            category_tag = CategoryTag.objects.get(id=tag_id, language=language)
+            category_tag.tags = request.data.get('tags', category_tag.tags)
+            category_tag.save()
+            return Response(CategoryTagSerializer(category_tag).data)
+        except CategoryTag.DoesNotExist:
+            return Response({'error': 'Category tag not found in this language'}, status=status.HTTP_404_NOT_FOUND)
 
     def destroy(self, request, *args, **kwargs):
         tag_id = kwargs.get('pk')
