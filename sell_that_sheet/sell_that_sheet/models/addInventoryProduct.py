@@ -11,6 +11,9 @@ from .translations import ParameterTranslation, AuctionParameterTranslation
 from .parameter import AuctionParameter
 from django.conf import settings
 
+from ..models.category_tag import CategoryTag
+from ..models.tag import Tag
+
 from ..services.openaiservice import OpenAiService
 from ..services.utils import parse_photos, limit_photo_size
 from pydantic import BaseModel
@@ -79,18 +82,29 @@ def get_translations(auction_parameter):
         "value_translation": PARAMETER_SEPARATOR.join(translated_values) if None not in translated_values else None,
     }
 
-def get_category_tags(category_id):
-    cursor.execute("SELECT tags FROM category_tags WHERE category_id = ?", (category_id,))
-    fetched = cursor.fetchone()
-    if fetched is not None:
-        return fetched[0]
+def get_category_tags(category_id, language='pl'):
+    """
+    input: category_id - id of the category
+              language - language of the tags
+    output: list of tags for the category
+    """
+
+    category_tags = CategoryTag.objects.filter(category_id=category_id, language=language).values_list('tags', flat=True)
+    category_tags = list(category_tags)
+
+    if category_tags and len(category_tags) > 0:
+        return category_tags
     else:
         return None
 
-def get_custom_tags():
-    cursor.execute("SELECT key, value FROM custom_tags")
-    return cursor.fetchall()
-
+def get_custom_tags(language='pl'):
+    """
+    input: language - language of the tags
+    output: list of tuples (key, value) of custom tags
+    """
+    custom_tags = Tag.objects.filter(language=language).values_list('key', 'value')
+    custom_tags = list(custom_tags)
+    return custom_tags
 
 def create_dates_from_name(name, tags):
     # Strict regex for 1 or 2-digit year ranges
@@ -182,10 +196,10 @@ def divideString(string, max_size=40, sep="|"):
 
     return res_string
 
-def prepare_tags(category, name, tags):
+def prepare_tags(category, name, tags, language='pl'):
     new_tags = ''
     try:
-        for ct in get_custom_tags():
+        for ct in get_custom_tags(language):
             if ct[0].upper() in name.upper() or ct[0].upper() in tags.upper():
                 if ct[0].upper() == 'LIFT' and ct[0].upper() in name.upper():
                     if not 'LIFT ' in name.upper() or 'PRZED LIFT' in name.upper():
@@ -196,7 +210,7 @@ def prepare_tags(category, name, tags):
         print("Nie udało się dodać własnych tagów", e)
 
     try:
-        category_tags = get_category_tags(int(float(category)))
+        category_tags = get_category_tags(int(float(category)), language)
         if category_tags is not None:
             new_tags += " " + category_tags
     except Exception as e:
@@ -373,7 +387,7 @@ class AddInventoryProduct(BaseModel):
         features[get_category_auto_tags_field_name(auction.category)] = prepare_tags(auction.category, auction.name, auction.tags)
 
         translated_features = get_translated_features(auction, {
-            "Vergleichsnummer": features[get_category_auto_tags_field_name(auction.category)]
+            "Vergleichsnummer": prepare_tags(auction.category, auction.name, auction.tags, 'de')
         })
 
         sku_code = f"{owner.username[0].upper()} {author.username.upper()[:3]} SP_{safe_cast_int(auction.shipment_price)} {safe_cast_int(price_euro)} {photoset.thumbnail.name.split('.')[0]} {photoset.directory_location}"

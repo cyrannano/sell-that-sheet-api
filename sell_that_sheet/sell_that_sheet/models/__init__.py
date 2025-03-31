@@ -11,4 +11,4 @@ from .keyword_translation import KeywordTranslation
 from .translations import ParameterTranslation, AuctionParameterTranslation
 from .translation_example import TranslationExample
 from .tag import Tag
-from .CategoryTag import CategoryTag
+from .category_tag import CategoryTag
