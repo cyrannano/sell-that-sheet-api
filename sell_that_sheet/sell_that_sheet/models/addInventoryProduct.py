@@ -212,7 +212,7 @@ def prepare_tags(category, name, tags, language='pl'):
     try:
         category_tags = get_category_tags(int(float(category)), language)
         if category_tags is not None:
-            new_tags += " " + category_tags
+            new_tags += " " + " ".join(category_tags)
     except Exception as e:
         raise Exception("Nie udało się dodać tagów z kategorii\n" + str(e)) from e
         print("Nie udało się dodać tagów z kategorii", e)
