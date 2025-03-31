@@ -247,7 +247,7 @@ def translate_rim_diameter(param):
     return {"Zollgröße": param.value_name.replace('"','').replace(".", ",")}
 
 def translate_rim_width(param):
-    return {"Felgenbreite": param.value_name.replace('"', '').replace(".", ",")}
+    return {"Felgenbreite": param.value_name.replace('"', '').replace(",", ".").split('.')[0]}
 
 CUSTOM_TRANSLATIONS = defaultdict(lambda: lambda _: {})
 
@@ -284,6 +284,8 @@ def get_translated_features(auction, to_translate=None):
     auction_parameters = list(auction_parameters)
 
     for param in auction_parameters:
+        if param.parameter.name in list(CUSTOM_TRANSLATIONS.keys()):
+            continue
         translations = get_translations(param)
         parameter_translation = translations["parameter_translation"]
         value_translation = translations["value_translation"]
