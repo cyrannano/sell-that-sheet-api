@@ -284,8 +284,6 @@ def get_translated_features(auction, to_translate=None):
     auction_parameters = list(auction_parameters)
 
     for param in auction_parameters:
-        if param.parameter.name in list(CUSTOM_TRANSLATIONS.keys()):
-            continue
         translations = get_translations(param)
         parameter_translation = translations["parameter_translation"]
         value_translation = translations["value_translation"]
@@ -388,7 +386,7 @@ class AddInventoryProduct(BaseModel):
         features[get_category_tags_field_name(auction.category)] = divideString(remove_duplicates(auction.tags).upper())
         features[get_category_auto_tags_field_name(auction.category)] = prepare_tags(auction.category, auction.name, auction.tags)
 
-        translated_features = get_translated_features(auction, {})
+        translated_features = get_translated_features(auction, {"Vergleichsnummer": prepare_tags(auction.category, auction.name, auction.tags, 'de')})
 
         sku_code = f"{owner.username[0].upper()} {author.username.upper()[:3]} SP_{safe_cast_int(auction.shipment_price)} {safe_cast_int(price_euro)} {photoset.thumbnail.name.split('.')[0]} {photoset.directory_location}"
 
@@ -398,7 +396,7 @@ class AddInventoryProduct(BaseModel):
         manufacturer_parameter = filter(lambda x: "PRODUCENT" in x.parameter.name.upper() or "MARKA" in x.parameter.name.upper(), parameters).__next__()
         manufacturer = match_manufacturer(manufacturer_parameter.value_name)
 
-        translated_features["Vergleichsnummer"] = prepare_tags(auction.category, auction.name, auction.tags, 'de')
+        # translated_features["Vergleichsnummer"] = prepare_tags(auction.category, auction.name, auction.tags, 'de')
         translated_features["Herstellernummer"] = auction.serial_numbers
         translated_features["OE/OEM Referenznummer(n)"] = features[get_category_tags_field_name(auction.category)].replace("|", ",")
 
