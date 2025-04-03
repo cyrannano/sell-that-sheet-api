@@ -224,7 +224,7 @@ def prepare_tags(category, name, tags, language='pl'):
     # remove duplicate words
     new_tags = remove_duplicates(new_tags)
 
-    return divideString(new_tags.upper())
+    return divideString(new_tags)
 
 def safe_cast_int(val):
     try:
