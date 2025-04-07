@@ -251,6 +251,13 @@ def translate_rim_width(param):
 
 CUSTOM_TRANSLATIONS = defaultdict(lambda: lambda _: {})
 
+FUNCTION_TRANSLATED_PARAMETERS = [
+    "Rozstaw śrub",
+    "Odsadzenie (ET)",
+    "Średnica felgi",
+    "Szerokość felgi",
+    ]
+
 CUSTOM_TRANSLATIONS.update({
     "Rozstaw śrub": translate_bolt_pattern,
     "Odsadzenie (ET)": translate_offset,
@@ -280,8 +287,10 @@ def get_translated_features(auction, to_translate=None):
     translated_features = add_custom_translations(auction_parameters)
 
     # filter out custom translations
-    auction_parameters = filter(lambda x: x.parameter.name in list(CUSTOM_TRANSLATIONS.keys()), auction_parameters)
+    print([x.parameter.name for x in auction_parameters])
+    auction_parameters = filter(lambda x: x.parameter.name not in FUNCTION_TRANSLATED_PARAMETERS, auction_parameters)
     auction_parameters = list(auction_parameters)
+    print([x.parameter.name for x in auction_parameters])
 
     for param in auction_parameters:
         translations = get_translations(param)
@@ -386,7 +395,7 @@ class AddInventoryProduct(BaseModel):
         features[get_category_tags_field_name(auction.category)] = divideString(remove_duplicates(auction.tags).upper())
         features[get_category_auto_tags_field_name(auction.category)] = prepare_tags(auction.category, auction.name, auction.tags)
 
-        translated_features = get_translated_features(auction, {"Vergleichsnummer": prepare_tags(auction.category, auction.name, auction.tags, 'de')})
+        translated_features = get_translated_features(auction, {})
 
         sku_code = f"{owner.username[0].upper()} {author.username.upper()[:3]} SP_{safe_cast_int(auction.shipment_price)} {safe_cast_int(price_euro)} {photoset.thumbnail.name.split('.')[0]} {photoset.directory_location}"
 
@@ -399,6 +408,7 @@ class AddInventoryProduct(BaseModel):
         # translated_features["Vergleichsnummer"] = prepare_tags(auction.category, auction.name, auction.tags, 'de')
         translated_features["Herstellernummer"] = auction.serial_numbers
         translated_features["OE/OEM Referenznummer(n)"] = features[get_category_tags_field_name(auction.category)].replace("|", ",")
+        translated_features["Vergleichsnummer"] = prepare_tags(auction.category, auction.name, auction.tags, 'de')
 
         # Create product dictionary
         product_data = {
