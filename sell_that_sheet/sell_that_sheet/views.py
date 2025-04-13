@@ -26,6 +26,8 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.views.decorators.csrf import csrf_exempt
 
+from .models.category_parameter import CategoryParameter
+from .serializers.category_parameter import CategoryParameterSerializer
 from .serializers.inputtagpreview import InputTagField
 from .services import list_directory_contents, AllegroConnector, perform_ocr, put_files_in_completed_directory
 from .services.openaiservice import OpenAiService
@@ -957,3 +959,19 @@ class CategoryTagViewSet(viewsets.ModelViewSet):
             return Response({'message': 'Category tag deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
         except CategoryTag.DoesNotExist:
             return Response({'error': 'Category tag not found in this language'}, status=status.HTTP_404_NOT_FOUND)
+
+class CategoryParameterViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for managing custom category parameters with multilingual support.
+    Supports listing, retrieving, creating, updating, and deleting.
+    Optionally, filtering by category_id can be done by passing a query parameter.
+    """
+    queryset = CategoryParameter.objects.all()
+    serializer_class = CategoryParameterSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        category = self.request.query_params.get('category_id')
+        if category:
+            queryset = queryset.filter(category_id=category)
+        return queryset
