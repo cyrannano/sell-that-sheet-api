@@ -247,7 +247,7 @@ def translate_rim_diameter(param):
     return {"Zollgröße": param.value_name.replace('"','').replace(".", ",")}
 
 def translate_rim_width(param):
-    return {"Felgenbreite": param.value_name.replace('"', '').replace(",", ".").split('.')[0]}
+    return {"Felgenbreite": param.value_name.replace('"', '').replace(".", ",").strip()}
 
 CUSTOM_TRANSLATIONS = defaultdict(lambda: lambda _: {})
 
