@@ -13,6 +13,7 @@ from django.conf import settings
 
 from ..models.category_tag import CategoryTag
 from ..models.tag import Tag
+from ..services.feature_translation_service import translate_features_dict, translate_name_description
 
 from ..services.openaiservice import OpenAiService
 from ..services.utils import parse_photos, limit_photo_size
@@ -23,7 +24,6 @@ import re
 conn = sqlite3.connect(settings.CUSTOM_PROPERTIES_DB_PATH, check_same_thread=False)
 cursor = conn.cursor()
 
-PARAMETER_SEPARATOR = "|"
 
 WEIGHT_TO_SHIPMENT_PRICE = {
     200: 100,
@@ -46,41 +46,6 @@ def calculate_price_euro(price, weight, er=4):
 
 assert calculate_price_euro(1000, 200) == 420
 
-def get_translations(auction_parameter):
-    """
-    Retrieve translations for AuctionParameter's value_name and Parameter's name.
-    First, try to find a translation using allegro_id.
-    Then, search for the exact value_name inside the fetched queryset.
-    """
-    # Fetch translation for the parameter
-    parameter_translation = ParameterTranslation.objects.filter(
-        parameter=auction_parameter.parameter
-    ).first()
-
-    # Fetch all possible translations using allegro_id
-    auction_parameter_translations = AuctionParameterTranslation.objects.filter(
-        auction_parameter__parameter__allegro_id=auction_parameter.parameter.allegro_id
-    )
-
-    values = []
-    if PARAMETER_SEPARATOR in auction_parameter.value_name:
-        values = auction_parameter.value_name.split(PARAMETER_SEPARATOR)
-    else:
-        values.append(auction_parameter.value_name)
-
-    translated_values = []
-
-    for value in values:
-        # Find the specific translation by matching value_name inside the queryset
-        auction_parameter_translation = auction_parameter_translations.filter(
-            auction_parameter__value_name=value
-        ).first()
-        translated_values.append(auction_parameter_translation.translation if auction_parameter_translation else None)
-
-    return {
-        "parameter_translation": parameter_translation.translation if parameter_translation else None,
-        "value_translation": PARAMETER_SEPARATOR.join(translated_values) if None not in translated_values else None,
-    }
 
 def get_category_tags(category_id, language='pl'):
     """
@@ -232,95 +197,6 @@ def safe_cast_int(val):
     except:
         return ''
 
-
-def translate_bolt_pattern(param):
-    values = param.value_name.split('x')
-    return {
-        "Lochzahl": f'{values[0]}',
-        "Lochkreis": f'{values[1]} mm',
-    }
-
-def translate_offset(param):
-    return {"Einpresstiefe (ET)": f'{param.value_name} mm'}
-
-def translate_rim_diameter(param):
-    return {"Zollgröße": param.value_name.replace('"','').replace(".", ",")}
-
-def translate_rim_width(param):
-    return {"Felgenbreite": param.value_name.replace('"', '').replace(".", ",").strip()}
-
-CUSTOM_TRANSLATIONS = defaultdict(lambda: lambda _: {})
-
-FUNCTION_TRANSLATED_PARAMETERS = [
-    "Rozstaw śrub",
-    "Odsadzenie (ET)",
-    "Średnica felgi",
-    "Szerokość felgi",
-    ]
-
-CUSTOM_TRANSLATIONS.update({
-    "Rozstaw śrub": translate_bolt_pattern,
-    "Odsadzenie (ET)": translate_offset,
-    "Średnica felgi": translate_rim_diameter,
-    "Szerokość felgi": translate_rim_width,
-})
-
-def add_custom_translations(auction_parameters):
-    tmp_dict = {}
-    for param in auction_parameters:
-        try:
-            tmp_dict.update(CUSTOM_TRANSLATIONS[param.parameter.name](param))
-        except:
-            continue
-    return tmp_dict
-
-def get_translated_features(auction, to_translate=None):
-    """
-    Fetches translated auction parameters, leveraging both database translations and AI translations.
-    If a parameter name is translated but the value name is not, pass the translated name along with the original value name to OpenAI.
-    """
-    if to_translate is None:
-        to_translate = dict()
-
-    auction_parameters = AuctionParameter.objects.filter(auction=auction).select_related("parameter")
-
-    translated_features = add_custom_translations(auction_parameters)
-
-    # filter out custom translations
-    print([x.parameter.name for x in auction_parameters])
-    auction_parameters = filter(lambda x: x.parameter.name not in FUNCTION_TRANSLATED_PARAMETERS, auction_parameters)
-    auction_parameters = list(auction_parameters)
-    print([x.parameter.name for x in auction_parameters])
-
-    for param in auction_parameters:
-        translations = get_translations(param)
-        parameter_translation = translations["parameter_translation"]
-        value_translation = translations["value_translation"]
-        if parameter_translation and value_translation:
-            # Both the parameter and value are translated, add them directly
-            translated_features[parameter_translation] = value_translation
-        elif parameter_translation and not value_translation:
-            # Parameter is translated, but value_name is not
-            # Pass the translated parameter name with the original value_name for OpenAI translation
-            to_translate[parameter_translation] = param.value_name
-        else:
-            # Neither the parameter nor the value_name is translated
-            to_translate[param.parameter.name] = param.value_name
-
-    # AI Translation for missing values
-    openai_service = OpenAiService()
-    try:
-        if to_translate:
-            ai_translations = openai_service.translate_parameters(to_translate)
-            translated_features.update(ai_translations)
-    except json.JSONDecodeError:
-        print(f"Failed to decode JSON response for auction {auction.id}")
-    except Exception as e:
-        print(f"Failed to translate parameters for auction {auction.id}: {e}")
-
-    return translated_features
-
-
 class AddInventoryProduct(BaseModel):
     inventory_id: str
     product_id: Optional[str] = None
@@ -357,13 +233,12 @@ class AddInventoryProduct(BaseModel):
         description_de = auction.translated_params.get("de", {}).get("description", "") if auction.translated_params else ""
 
         if not description_de or not product_name_de:
-            openai_service = OpenAiService()
             try:
-                translation = openai_service.translate_completion(title=product_name, description=description, category=auction.category)
+                translated_name, translated_description = translate_name_description(product_name, description, auction.category, "de")
                 if not description_de:
-                    description_de = translation.get("description", "")
+                    description_de = translated_description
                 if not product_name_de:
-                    product_name_de = translation.get("title", "")
+                    product_name_de = translated_name
             except Exception as e:
                 print(f"Failed to translate auction {auction.id}: {e}")
 
@@ -390,12 +265,13 @@ class AddInventoryProduct(BaseModel):
         parameters = AuctionParameter.objects.filter(auction=auction)
         features = {param.parameter.name: param.value_name for param in parameters}
 
+        translated_features = translate_features_dict(features, category_id=auction.category, language="de", serial_numbers=auction.serial_numbers, tags=auction.tags, name=auction.name)
+
         # Add category specific fields
         features[get_category_part_number_field_name(auction.category)] = auction.serial_numbers
         features[get_category_tags_field_name(auction.category)] = divideString(remove_duplicates(auction.tags).upper())
         features[get_category_auto_tags_field_name(auction.category)] = prepare_tags(auction.category, auction.name, auction.tags)
 
-        translated_features = get_translated_features(auction, {})
 
         sku_code = f"{owner.username[0].upper()} {author.username.upper()[:3]} SP_{safe_cast_int(auction.shipment_price)} {safe_cast_int(price_euro)} {photoset.thumbnail.name.split('.')[0]} {photoset.directory_location}"
 
@@ -404,11 +280,6 @@ class AddInventoryProduct(BaseModel):
         # Find manufacturer
         manufacturer_parameter = filter(lambda x: "PRODUCENT" in x.parameter.name.upper() or "MARKA" in x.parameter.name.upper(), parameters).__next__()
         manufacturer = match_manufacturer(manufacturer_parameter.value_name)
-
-        # translated_features["Vergleichsnummer"] = prepare_tags(auction.category, auction.name, auction.tags, 'de')
-        translated_features["Herstellernummer"] = auction.serial_numbers
-        translated_features["OE/OEM Referenznummer(n)"] = features[get_category_tags_field_name(auction.category)].replace("|", ",")
-        translated_features["Vergleichsnummer"] = prepare_tags(auction.category, auction.name, auction.tags, 'de')
 
         # Create product dictionary
         product_data = {
