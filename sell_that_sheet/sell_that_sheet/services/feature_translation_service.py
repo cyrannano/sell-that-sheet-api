@@ -39,13 +39,14 @@ CUSTOM_TRANSLATIONS.update({
     "Szerokość felgi": translate_rim_width,
 })
 
-def add_custom_translations(auction_parameters):
-    tmp_dict = {}
-    for param in auction_parameters:
-        try:
-            tmp_dict.update(CUSTOM_TRANSLATIONS[param](auction_parameters[param]))
-        except:
-            continue
+def add_custom_translations(features: Dict[str, str]) -> Dict[str, str]:
+    tmp_dict: Dict[str, str] = {}
+    for key, val in features.items():
+        if key in CUSTOM_TRANSLATIONS:
+            try:
+                tmp_dict.update(CUSTOM_TRANSLATIONS[key](val))
+            except Exception:
+                continue
     return tmp_dict
 
 def get_translations(auction_parameter):
@@ -92,33 +93,24 @@ def translate_features_dict(
     tags: Optional[str] = None,
     language: str = "de"
 ) -> Dict[str, str]:
-    """
-    Translates a raw BaseLinker-style feature dict (param -> value)
-    using custom hardcoded rules, DB, and OpenAI fallback.
-    """
-    translated = {}
-    to_translate = {}
+    translated: Dict[str, str] = {}
+    to_translate: Dict[str, str] = {}
 
-    # 1. Handle hardcoded custom logic first (e.g. ET, rim size etc.)
+    # 1. Hardcoded custom translations
     translated.update(add_custom_translations(features))
 
-    # 2. Remove any keys already covered by custom logic
-    handled_keys = set(translated.keys())
-
+    # 2. DB/AI for the rest, skipping already-handled or function-translated keys
     for k, v in features.items():
-        if k in handled_keys:
+        if k in FUNCTION_TRANSLATED_PARAMETERS or k in translated:
             continue
-
-        # Simulate again for get_translations
+        # Build a mock with the real allegro_id if available (assuming features keys came from real AuctionParameter objects)
         mock_param = type("MockParam", (), {
             "parameter": type("Mock", (), {"name": k, "allegro_id": None}),
             "value_name": v
         })()
-
         t = get_translations(mock_param)
         param_trans = t["parameter_translation"] or k
         value_trans = t["value_translation"]
-
         if param_trans and value_trans:
             translated[param_trans] = value_trans
         elif param_trans:
@@ -126,7 +118,7 @@ def translate_features_dict(
         else:
             to_translate[k] = v
 
-    # 3. AI fallback for what wasn't handled
+    # 3. AI fallback
     if to_translate:
         try:
             openai = OpenAiService()
@@ -135,11 +127,15 @@ def translate_features_dict(
         except Exception as e:
             print(f"[WARN] AI translation failed: {e}")
 
-        # translated_features["Vergleichsnummer"] = prepare_tags(auction.category, auction.name, auction.tags, 'de')
+    # 4. Always append fixed reference fields
+    if serial_numbers is not None:
         translated["Herstellernummer"] = serial_numbers
+    if category_id is not None and features.get(get_category_tags_field_name(category_id)):
         translated["OE/OEM Referenznummer(n)"] = features[
-            get_category_tags_field_name(category_id)].replace("|", ",")
-        translated["Vergleichsnummer"] = prepare_tags(category_id, name, tags, 'de')
+            get_category_tags_field_name(category_id)
+        ].replace("|", ",")
+    if category_id is not None and name is not None and tags is not None:
+        translated["Vergleichsnummer"] = prepare_tags(category_id, name, tags, language)
 
     return translated
 
