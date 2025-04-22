@@ -125,7 +125,7 @@ def translate_features_dict(
     translated: Dict[str, str] = {}
     to_translate: Dict[str, str] = {}
     from ..models.addInventoryProduct import get_category_tags_field_name, prepare_tags
-    from sell_that_sheet.sell_that_sheet.services.baselinkerservice import BASELINKER_TO_ALLEGRO_CATEGORY_ID
+    from .baselinkerservice import BASELINKER_TO_ALLEGRO_CATEGORY_ID
 
     # 1. Hardcoded translations
     translated.update(add_custom_translations(features))
