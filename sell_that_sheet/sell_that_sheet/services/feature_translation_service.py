@@ -113,7 +113,8 @@ def translate_features_dict(
     serial_numbers: Optional[str] = None,
     name: Optional[str] = None,
     tags: Optional[str] = None,
-    language: str = "de"
+    language: str = "de",
+    django_model_source=False
 ) -> Dict[str, str]:
     """
     Translates feature key→value dict using:
@@ -135,7 +136,8 @@ def translate_features_dict(
         if key in FUNCTION_TRANSLATED_PARAMETERS or key in translated:
             continue
         # Use dict input to get_translations
-        t = get_translations({"name": key, "value_name": value, "allegro_id": int(BASELINKER_TO_ALLEGRO_CATEGORY_ID.get(str(category_id)))})
+        allegro_cat_id = category_id if django_model_source else int(BASELINKER_TO_ALLEGRO_CATEGORY_ID.get(str(category_id)))
+        t = get_translations({"name": key, "value_name": value, "allegro_id": allegro_cat_id})
         param_trans = t.get("parameter_translation") or key
         value_trans = t.get("value_translation")
         if param_trans and value_trans:
