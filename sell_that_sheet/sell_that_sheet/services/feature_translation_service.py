@@ -2,7 +2,6 @@ from collections import defaultdict
 from typing import Dict, Optional
 
 from ..models.translations import ParameterTranslation, AuctionParameterTranslation
-from ..models.addInventoryProduct import get_category_tags_field_name, prepare_tags
 from ..services.openaiservice import OpenAiService
 
 PARAMETER_SEPARATOR = "|"
@@ -95,6 +94,7 @@ def translate_features_dict(
 ) -> Dict[str, str]:
     translated: Dict[str, str] = {}
     to_translate: Dict[str, str] = {}
+    from ..models.addInventoryProduct import get_category_tags_field_name, prepare_tags
 
     # 1. Hardcoded custom translations
     translated.update(add_custom_translations(features))
