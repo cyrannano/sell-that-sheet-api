@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Dict, Optional, Union
 
-from ..models import Auction, AuctionParameter
+from ..models import Auction
 from ..models.translations import ParameterTranslation, AuctionParameterTranslation
 from ..services.openaiservice import OpenAiService
 
@@ -115,7 +115,6 @@ def translate_features_dict(
     name: Optional[str] = None,
     tags: Optional[str] = None,
     language: str = "de",
-    django_model_source_parameters: Optional[AuctionParameter] = None,
 ) -> Dict[str, str]:
     """
     Translates feature key→value dict using:
@@ -138,11 +137,7 @@ def translate_features_dict(
             continue
         # Use dict input to get_translations
 
-        if django_model_source_parameters is None:
-            allegro_cat_id = int(BASELINKER_TO_ALLEGRO_CATEGORY_ID.get(str(category_id)))
-            t = get_translations({"name": key, "value_name": value, "allegro_id": allegro_cat_id})
-        else:
-            t = get_translations(django_model_source_parameters)
+        t = get_translations({"name": key, "value_name": value, "allegro_id": category_id})
 
         param_trans = t.get("parameter_translation") or key
         value_trans = t.get("value_translation")
