@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Dict, Optional
 
-from ..models import ParameterTranslation, AuctionParameterTranslation
+from ..models.translations import ParameterTranslation, AuctionParameterTranslation
 from ..models.addInventoryProduct import get_category_tags_field_name, prepare_tags
 from ..services.openaiservice import OpenAiService
 
