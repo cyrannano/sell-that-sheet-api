@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from ..models.translations import ParameterTranslation, AuctionParameterTranslation
 from ..services.openaiservice import OpenAiService
@@ -48,40 +48,63 @@ def add_custom_translations(features: Dict[str, str]) -> Dict[str, str]:
                 continue
     return tmp_dict
 
-def get_translations(auction_parameter):
+def get_translations(
+    param: Union[Dict[str, Union[str, int]], object]
+) -> Dict[str, Optional[str]]:
     """
-    Retrieve translations for AuctionParameter's value_name and Parameter's name.
-    First, try to find a translation using allegro_id.
-    Then, search for the exact value_name inside the fetched queryset.
+    Retrieve parameter and value translations from DB. Supports either:
+      - a dict with keys 'name', 'value_name', and optional 'allegro_id'
+      - an AuctionParameter-like object with .parameter.name, .parameter.allegro_id, and .value_name
     """
-    # Fetch translation for the parameter
-    parameter_translation = ParameterTranslation.objects.filter(
-        parameter=auction_parameter.parameter
-    ).first()
-
-    # Fetch all possible translations using allegro_id
-    auction_parameter_translations = AuctionParameterTranslation.objects.filter(
-        auction_parameter__parameter__allegro_id=auction_parameter.parameter.allegro_id
-    )
-
-    values = []
-    if PARAMETER_SEPARATOR in auction_parameter.value_name:
-        values = auction_parameter.value_name.split(PARAMETER_SEPARATOR)
+    # Unpack inputs
+    if isinstance(param, dict):
+        name = param.get("name")
+        allegro_id = param.get("allegro_id")
+        value_name = param.get("value_name", "")
     else:
-        values.append(auction_parameter.value_name)
+        name = param.parameter.name
+        allegro_id = getattr(param.parameter, "allegro_id", None)
+        value_name = param.value_name or ""
 
+    # Lookup parameter translation by allegro_id or name
+    if allegro_id:
+        param_qs = ParameterTranslation.objects.filter(
+            parameter__allegro_id=allegro_id
+        )
+    else:
+        param_qs = ParameterTranslation.objects.filter(
+            parameter__name=name
+        )
+    parameter_translation = param_qs.first()
+
+    # Lookup value translations
+    if allegro_id:
+        apt_qs = AuctionParameterTranslation.objects.filter(
+            auction_parameter__parameter__allegro_id=allegro_id
+        )
+    else:
+        apt_qs = AuctionParameterTranslation.objects.filter(
+            auction_parameter__parameter__name=name
+        )
+
+    # Handle multiple split values
+    values = (
+        value_name.split(PARAMETER_SEPARATOR)
+        if PARAMETER_SEPARATOR in value_name
+        else [value_name]
+    )
     translated_values = []
-
-    for value in values:
-        # Find the specific translation by matching value_name inside the queryset
-        auction_parameter_translation = auction_parameter_translations.filter(
-            auction_parameter__value_name=value
-        ).first()
-        translated_values.append(auction_parameter_translation.translation if auction_parameter_translation else None)
+    for v in values:
+        entry = apt_qs.filter(auction_parameter__value_name=v).first()
+        translated_values.append(entry.translation if entry else None)
 
     return {
         "parameter_translation": parameter_translation.translation if parameter_translation else None,
-        "value_translation": PARAMETER_SEPARATOR.join(translated_values) if None not in translated_values else None,
+        "value_translation": (
+            PARAMETER_SEPARATOR.join(translated_values)
+            if None not in translated_values
+            else None
+        ),
     }
 
 def translate_features_dict(
@@ -92,50 +115,59 @@ def translate_features_dict(
     tags: Optional[str] = None,
     language: str = "de"
 ) -> Dict[str, str]:
+    """
+    Translates feature key→value dict using:
+      1. Hardcoded translations
+      2. DB lookups
+      3. AI fallback
+      4. Always appends reference fields
+    """
     translated: Dict[str, str] = {}
     to_translate: Dict[str, str] = {}
     from ..models.addInventoryProduct import get_category_tags_field_name, prepare_tags
+    from sell_that_sheet.sell_that_sheet.services.baselinkerservice import BASELINKER_TO_ALLEGRO_CATEGORY_ID
 
-    # 1. Hardcoded custom translations
+    # 1. Hardcoded translations
     translated.update(add_custom_translations(features))
 
-    # 2. DB/AI for the rest, skipping already-handled or function-translated keys
-    for k, v in features.items():
-        if k in FUNCTION_TRANSLATED_PARAMETERS or k in translated:
+    # 2. DB/AI translation for remaining keys
+    for key, value in features.items():
+        if key in FUNCTION_TRANSLATED_PARAMETERS or key in translated:
             continue
-        # Build a mock with the real allegro_id if available (assuming features keys came from real AuctionParameter objects)
-        mock_param = type("MockParam", (), {
-            "parameter": type("Mock", (), {"name": k, "allegro_id": None}),
-            "value_name": v
-        })()
-        t = get_translations(mock_param)
-        param_trans = t["parameter_translation"] or k
-        value_trans = t["value_translation"]
+        # Use dict input to get_translations
+        t = get_translations({"name": key, "value_name": value, "allegro_id": int(BASELINKER_TO_ALLEGRO_CATEGORY_ID.get(str(category_id)))})
+        param_trans = t.get("parameter_translation") or key
+        value_trans = t.get("value_translation")
         if param_trans and value_trans:
             translated[param_trans] = value_trans
         elif param_trans:
-            to_translate[param_trans] = v
+            to_translate[param_trans] = value
         else:
-            to_translate[k] = v
+            to_translate[key] = value
 
     # 3. AI fallback
     if to_translate:
         try:
-            openai = OpenAiService()
-            ai_translations = openai.translate_parameters(to_translate)
-            translated.update(ai_translations)
+            ai = OpenAiService()
+            ai_trans = ai.translate_parameters(to_translate)
+            translated.update(ai_trans)
         except Exception as e:
             print(f"[WARN] AI translation failed: {e}")
 
-    # 4. Always append fixed reference fields
+    # 4. Append fixed fields
     if serial_numbers is not None:
         translated["Herstellernummer"] = serial_numbers
-    if category_id is not None and features.get(get_category_tags_field_name(category_id)):
-        translated["OE/OEM Referenznummer(n)"] = features[
-            get_category_tags_field_name(category_id)
-        ].replace("|", ",")
-    if category_id is not None and name is not None and tags is not None:
-        translated["Vergleichsnummer"] = prepare_tags(category_id, name, tags, language)
+    tag_field = (
+        features.get(get_category_tags_field_name(category_id))
+        if category_id is not None
+        else None
+    )
+    if tag_field:
+        translated["OE/OEM Referenznummer(n)"] = tag_field.replace("|", ",")
+    if category_id and name and tags:
+        translated["Vergleichsnummer"] = prepare_tags(
+            category_id, name, tags, language
+        )
 
     return translated
 
