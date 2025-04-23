@@ -1,7 +1,7 @@
 from collections import defaultdict
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, List
 
-from ..models import Auction
+from ..models import Auction, AuctionParameter
 from ..models.translations import ParameterTranslation, AuctionParameterTranslation
 from ..services.openaiservice import OpenAiService
 
@@ -49,8 +49,43 @@ def add_custom_translations(features: Dict[str, str]) -> Dict[str, str]:
                 continue
     return tmp_dict
 
+def get_translation_auction_parameter(auction_parameter: AuctionParameter):
+    """
+        Retrieve translations for AuctionParameter's value_name and Parameter's name.
+        First, try to find a translation using allegro_id.
+        Then, search for the exact value_name inside the fetched queryset.
+        """
+    # Fetch translation for the parameter
+    parameter_translation = ParameterTranslation.objects.filter(
+        parameter=auction_parameter.parameter
+    ).first()
+
+    # Fetch all possible translations using allegro_id
+    auction_parameter_translations = AuctionParameterTranslation.objects.filter(
+        auction_parameter__parameter__allegro_id=auction_parameter.parameter.allegro_id
+    )
+
+    values = []
+    if PARAMETER_SEPARATOR in auction_parameter.value_name:
+        values = auction_parameter.value_name.split(PARAMETER_SEPARATOR)
+    else:
+        values.append(auction_parameter.value_name)
+
+    translated_values = []
+
+    for value in values:
+        # Find the specific translation by matching value_name inside the queryset
+        auction_parameter_translation = auction_parameter_translations.filter(
+            auction_parameter__value_name=value
+        ).first()
+        translated_values.append(auction_parameter_translation.translation if auction_parameter_translation else None)
+
+    return {
+        "parameter_translation": parameter_translation.translation if parameter_translation else None,
+        "value_translation": PARAMETER_SEPARATOR.join(translated_values) if None not in translated_values else None,
+    }
 def get_translations(
-    param: Union[Dict[str, Union[str, int]], object]
+    param: Union[Dict[str, Union[str, int]], AuctionParameter]
 ) -> Dict[str, Optional[str]]:
     """
     Retrieve parameter and value translations from DB. Supports either:
@@ -60,33 +95,20 @@ def get_translations(
     # Unpack inputs
     if isinstance(param, dict):
         name = param.get("name")
-        allegro_id = param.get("allegro_id")
         value_name = param.get("value_name", "")
     else:
-        name = param.parameter.name
-        allegro_id = getattr(param.parameter, "allegro_id", None)
-        value_name = param.value_name or ""
+        return get_translation_auction_parameter(param)
 
     # Lookup parameter translation by allegro_id or name
-    if allegro_id:
-        param_qs = ParameterTranslation.objects.filter(
-            parameter__allegro_id=allegro_id
-        )
-    else:
-        param_qs = ParameterTranslation.objects.filter(
-            parameter__name=name
-        )
+    param_qs = ParameterTranslation.objects.filter(
+        parameter__name=name
+    )
     parameter_translation = param_qs.first()
 
     # Lookup value translations
-    if allegro_id:
-        apt_qs = AuctionParameterTranslation.objects.filter(
-            auction_parameter__parameter__allegro_id=allegro_id
-        )
-    else:
-        apt_qs = AuctionParameterTranslation.objects.filter(
-            auction_parameter__parameter__name=name
-        )
+    apt_qs = AuctionParameterTranslation.objects.filter(
+        auction_parameter__parameter__name=name
+    )
 
     # Handle multiple split values
     values = (
@@ -109,12 +131,13 @@ def get_translations(
     }
 
 def translate_features_dict(
-    features: Dict[str, str],
+    features: Union[Dict[str, str], List[AuctionParameter]],
     category_id: Optional[int] = None,
     serial_numbers: Optional[str] = None,
     name: Optional[str] = None,
     tags: Optional[str] = None,
     language: str = "de",
+    auction_parameters_passed=False
 ) -> Dict[str, str]:
     """
     Translates feature key→value dict using:
@@ -132,12 +155,25 @@ def translate_features_dict(
     translated.update(add_custom_translations(features))
 
     # 2. DB/AI translation for remaining keys
-    for key, value in features.items():
+
+    if not auction_parameters_passed:
+        features = features.items()
+
+    for e in features:
+        if auction_parameters_passed:
+            key = e.parameter.name
+            value = e.value_name
+        else:
+            key, value = e
+
         if key in FUNCTION_TRANSLATED_PARAMETERS or key in translated:
             continue
         # Use dict input to get_translations
 
-        t = get_translations({"name": key, "value_name": value, "allegro_id": category_id})
+        if auction_parameters_passed:
+            t = get_translations(e)
+        else:
+            t = get_translations({"name": key, "value_name": value})
 
         param_trans = t.get("parameter_translation") or key
         value_trans = t.get("value_translation")
