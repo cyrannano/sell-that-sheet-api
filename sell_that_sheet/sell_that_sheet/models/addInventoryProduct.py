@@ -265,14 +265,9 @@ class AddInventoryProduct(BaseModel):
         parameters = AuctionParameter.objects.filter(auction=auction)
         features = {param.parameter.name: param.value_name for param in parameters}
 
-        # 1️⃣ Add category‑specific fields before translation
-        features[get_category_part_number_field_name(auction.category)] = auction.serial_numbers
         features[get_category_tags_field_name(auction.category)] = divideString(remove_duplicates(auction.tags).upper())
-        features[get_category_auto_tags_field_name(auction.category)] = prepare_tags(
-            auction.category, auction.name, auction.tags
-        )
 
-        # 2️⃣ Translate features with the shared service
+        # Translate features with the shared service
         translated_features = translate_features_dict(
             features,
             category_id=auction.category,
@@ -281,6 +276,12 @@ class AddInventoryProduct(BaseModel):
             tags=auction.tags,
             language="de",
             auction_parameters=parameters
+        )
+
+        # Add category‑specific fields before translation
+        features[get_category_part_number_field_name(auction.category)] = auction.serial_numbers
+        features[get_category_auto_tags_field_name(auction.category)] = prepare_tags(
+            auction.category, auction.name, auction.tags
         )
 
         sku_code = f"{owner.username[0].upper()} {author.username.upper()[:3]} SP_{safe_cast_int(auction.shipment_price)} {safe_cast_int(price_euro)} {photoset.thumbnail.name.split('.')[0]} {photoset.directory_location}"
