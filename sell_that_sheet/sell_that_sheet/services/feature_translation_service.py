@@ -1,6 +1,8 @@
 from collections import defaultdict
 from typing import Dict, Optional, Union, List
 
+from django.db.models import QuerySet
+
 from ..models import Auction, AuctionParameter
 from ..models.translations import ParameterTranslation, AuctionParameterTranslation
 from ..services.openaiservice import OpenAiService
@@ -137,7 +139,7 @@ def translate_features_dict(
     name: Optional[str] = None,
     tags: Optional[str] = None,
     language: str = "de",
-    auction_parameters_passed=False
+    auction_parameters: Optional[QuerySet[AuctionParameter]] = None
 ) -> Dict[str, str]:
     """
     Translates feature key→value dict using:
@@ -156,24 +158,13 @@ def translate_features_dict(
 
     # 2. DB/AI translation for remaining keys
 
-    if not auction_parameters_passed:
-        features = features.items()
-
-    for e in features:
-        if auction_parameters_passed:
-            key = e.parameter.name
-            value = e.value_name
-        else:
-            key, value = e
+    for key, value in features.items():
 
         if key in FUNCTION_TRANSLATED_PARAMETERS or key in translated:
             continue
         # Use dict input to get_translations
 
-        if auction_parameters_passed:
-            t = get_translations(e)
-        else:
-            t = get_translations({"name": key, "value_name": value})
+        t = get_translations({"name": key, "value_name": value})
 
         param_trans = t.get("parameter_translation") or key
         value_trans = t.get("value_translation")
@@ -183,6 +174,20 @@ def translate_features_dict(
             to_translate[param_trans] = value
         else:
             to_translate[key] = value
+
+    if auction_parameters:
+        for parameter in auction_parameters:
+            t = get_translations(parameter)
+
+            param_trans = t.get("parameter_translation") or key
+            value_trans = t.get("value_translation")
+
+            if param_trans and value_trans:
+                translated[param_trans] = value_trans
+            elif param_trans:
+                to_translate[param_trans] = parameter.value_name
+            else:
+                to_translate[key] = parameter.value_name
 
     # 3. AI fallback
     if to_translate:

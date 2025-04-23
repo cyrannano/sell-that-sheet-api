@@ -280,6 +280,7 @@ class AddInventoryProduct(BaseModel):
             name=auction.name,
             tags=auction.tags,
             language="de",
+            auction_parameters=parameters
         )
 
         sku_code = f"{owner.username[0].upper()} {author.username.upper()[:3]} SP_{safe_cast_int(auction.shipment_price)} {safe_cast_int(price_euro)} {photoset.thumbnail.name.split('.')[0]} {photoset.directory_location}"
