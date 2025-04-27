@@ -975,3 +975,16 @@ class CategoryParameterViewSet(viewsets.ModelViewSet):
         if category:
             queryset = queryset.filter(category_id=category)
         return queryset
+
+class TranslateBaselinkerProductsView(APIView):
+    def post(self, request):
+        language = request.data.get('language')
+        product_ids = request.data.get('product_ids', [])
+        if not language or not product_ids:
+            return Response({"error": "Language and product IDs are required."}, status=400)
+
+        # Call the translation service
+        blservice = BaseLinkerService()
+        response = blservice.translate_product_parameters(product_ids, language)
+
+        return Response(response)

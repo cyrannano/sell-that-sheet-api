@@ -32,6 +32,7 @@ from .views import (
     DistinctAuctionParameterView,
     DistinctParameterView, SaveTranslationsView, ListTranslationsView,
     TranslationExampleViewSet, TagViewSet, CategoryTagViewSet, CategoryParameterViewSet,
+    TranslateBaselinkerProductsView,
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -123,4 +124,5 @@ urlpatterns = [
     path('auctionsets/baselinker/upload/<int:auctionset_id>', UploadAuctionSetToBaselinkerView.as_view(), name='upload_auctionset_to_baselinker'),
     path('tag-preview/', PrepareTagFieldPreview.as_view(), name='tag_preview'),
     path('api/translate/', TranslateView.as_view(), name='translate'),
+    path('/api/translate-products/', TranslateBaselinkerProductsView.as_view(), name='translate_bl_products'),
 ]
