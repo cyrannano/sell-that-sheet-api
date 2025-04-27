@@ -977,6 +977,30 @@ class CategoryParameterViewSet(viewsets.ModelViewSet):
         return queryset
 
 class TranslateBaselinkerProductsView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['language', 'product_ids'],
+            properties={
+                'language': openapi.Schema(type=openapi.TYPE_STRING, description='Target language for translation'),
+                'product_ids': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_INTEGER), description='List of product IDs to translate')
+            },
+        ),
+        responses={
+            200: openapi.Response(
+                description='Translation result',
+                examples={
+                    'application/json': {
+                        'translation': 'Translated text here'
+                    }
+                }
+            ),
+            400: 'Bad Request',
+            401: 'Unauthorized',
+        },
+        operation_description="Translate Baselinker products using the specified language"
+    )
+
     def post(self, request):
         language = request.data.get('language')
         product_ids = request.data.get('product_ids', [])
