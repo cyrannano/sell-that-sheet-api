@@ -590,6 +590,8 @@ class BaseLinkerService:
                     "inventory_id": inventory_id,
                     "product_id": str(product_id),
                     "text_fields": {
+                        f"name|{target_lang}": translated_name,
+                        f"description_extra1|{target_lang}": translated_description,
                         f"features|{target_lang}": translated_features
                     }
                 }
