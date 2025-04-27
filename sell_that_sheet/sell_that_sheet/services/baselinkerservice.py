@@ -6,7 +6,7 @@ from difflib import SequenceMatcher
 from typing import Dict, List, Optional
 from django.conf import settings
 
-from .feature_translation_service import translate_name_description
+from .feature_translation_service import translate_name_description, translate_features_dict
 from .utils import prepare_temp_directory, remove_temp_directory
 from ..models import AddInventoryProduct, AddInventoryProductResponse
 from .allegroconnector import AllegroConnector
@@ -584,7 +584,7 @@ class BaseLinkerService:
                     logger.warning(f"Product {product_id} has no features to translate.")
                     continue
 
-                translated_features = self._translate_features(features, target_lang, product.get("category_id"))
+                translated_features = self._translate_features(features, target_lang, product_allegro_category_id)
 
                 update_payload = {
                     "inventory_id": inventory_id,
@@ -603,3 +603,8 @@ class BaseLinkerService:
             raise
 
         return responses
+
+    def _translate_features(self, features, target_lang, category_id):
+        translated_features = translate_features_dict(features=features, language=target_lang, category_id=category_id)
+
+        return translated_features
