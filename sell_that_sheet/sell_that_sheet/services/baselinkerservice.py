@@ -12,7 +12,8 @@ from ..models import AddInventoryProduct, AddInventoryProductResponse
 from .allegroconnector import AllegroConnector
 
 from ..models import AuctionSet
-from ..models.addInventoryProduct import prepare_tags, get_category_tags_field_name, get_category_part_number_field_name
+from ..models.addInventoryProduct import prepare_tags, get_category_tags_field_name, \
+    get_category_part_number_field_name, get_category_auto_tags_field_name
 
 logger = logging.getLogger(__name__)
 
@@ -570,7 +571,7 @@ class BaseLinkerService:
                 product_category = product.get("category_id")
                 product_allegro_category_id = int(BASELINKER_TO_ALLEGRO_CATEGORY_ID.get(str(product_category)))
                 product_serial_numbers = features.get(get_category_part_number_field_name(product_allegro_category_id))
-                product_tags = features.get(get_category_tags_field_name(product_allegro_category_id))
+                product_tags = features.get(get_category_auto_tags_field_name(product_allegro_category_id))
 
                 auto_tags = prepare_tags(
                     product_allegro_category_id, product_name, product_tags
