@@ -592,7 +592,7 @@ class BaseLinkerService:
                     logger.warning(f"Product {product_id} has no features to translate.")
                     continue
 
-                translated_features = self._translate_features(features, target_lang, product_allegro_category_id, product_serial_numbers, auto_tags)
+                translated_features = self._translate_features(features, target_lang, product_allegro_category_id, product_serial_numbers, auto_tags, product_name)
 
                 update_payload = {
                     "inventory_id": inventory_id,
@@ -614,8 +614,8 @@ class BaseLinkerService:
 
         return responses
 
-    def _translate_features(self, features, target_lang, category_id, serial_numbers, auto_tags):
+    def _translate_features(self, features, target_lang, category_id, serial_numbers, auto_tags, product_name):
         translated_features = translate_features_dict(features=features, language=target_lang, category_id=category_id,
-                                                      serial_numbers=serial_numbers, tags=auto_tags)
+                                                      serial_numbers=serial_numbers, tags=auto_tags, name=product_name)
 
         return translated_features
