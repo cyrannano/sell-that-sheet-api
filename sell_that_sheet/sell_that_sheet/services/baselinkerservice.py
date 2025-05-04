@@ -575,6 +575,8 @@ class BaseLinkerService:
 
                 if product_tags:
                     del features[get_category_auto_tags_field_name(product_allegro_category_id)]
+                if product_serial_numbers:
+                    del features[get_category_part_number_field_name(product_allegro_category_id)]
 
                 auto_tags = prepare_tags(
                     product_allegro_category_id, product_name, product_tags
