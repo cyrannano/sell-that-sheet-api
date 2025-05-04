@@ -12,6 +12,7 @@ from ..models import AddInventoryProduct, AddInventoryProductResponse
 from .allegroconnector import AllegroConnector
 
 from ..models import AuctionSet
+from ..models.addInventoryProduct import prepare_tags, get_category_tags_field_name, get_category_part_number_field_name
 
 logger = logging.getLogger(__name__)
 
@@ -565,15 +566,21 @@ class BaseLinkerService:
                 text_fields = product.get("text_fields", {})
                 features = text_fields.get("features")
 
-                product_name, product_description = text_fields.get("name"), text_fields.get("description")
+                product_name, product_description = text_fields.get("name"), text_fields.get("description", text_fields.get("description_extra4"))
                 product_category = product.get("category_id")
                 product_allegro_category_id = int(BASELINKER_TO_ALLEGRO_CATEGORY_ID.get(str(product_category)))
+                product_serial_numbers = features.get(get_category_part_number_field_name(product_allegro_category_id))
+                product_tags = features.get(get_category_tags_field_name(product_allegro_category_id))
+
+                auto_tags = prepare_tags(
+                    product_allegro_category_id, product_name, product_tags
+                )
 
                 translated_name, translated_description = translate_name_description(
                     product_name,
                     product_description,
                     product_allegro_category_id,
-                    target_lang
+                    target_lang,
                 )
 
                 if not translated_name or not translated_description:
@@ -584,7 +591,7 @@ class BaseLinkerService:
                     logger.warning(f"Product {product_id} has no features to translate.")
                     continue
 
-                translated_features = self._translate_features(features, target_lang, product_allegro_category_id)
+                translated_features = self._translate_features(features, target_lang, product_allegro_category_id, product_serial_numbers, auto_tags)
 
                 update_payload = {
                     "inventory_id": inventory_id,
@@ -606,7 +613,8 @@ class BaseLinkerService:
 
         return responses
 
-    def _translate_features(self, features, target_lang, category_id):
-        translated_features = translate_features_dict(features=features, language=target_lang, category_id=category_id)
+    def _translate_features(self, features, target_lang, category_id, serial_numbers, auto_tags):
+        translated_features = translate_features_dict(features=features, language=target_lang, category_id=category_id,
+                                                      serial_numbers=serial_numbers, tags=auto_tags)
 
         return translated_features
