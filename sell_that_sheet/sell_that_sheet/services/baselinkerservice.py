@@ -13,7 +13,7 @@ from .allegroconnector import AllegroConnector
 
 from ..models import AuctionSet
 from ..models.addInventoryProduct import prepare_tags, get_category_tags_field_name, \
-    get_category_part_number_field_name, get_category_auto_tags_field_name
+    get_category_part_number_field_name, get_category_auto_tags_field_name, calculate_price_euro, map_shipment_to_weight
 
 logger = logging.getLogger(__name__)
 
@@ -566,6 +566,9 @@ class BaseLinkerService:
             for product_id, product in product_data.items():
                 text_fields = product.get("text_fields", {})
                 features = text_fields.get("features")
+                product_price_pln = product.get("prices", {}).get("1184")
+                product_price_euro = product.get("prices", {}).get("4848")
+                product_weight = product.get("weight")
 
                 product_name, product_description = text_fields.get("name"), text_fields.get("description", text_fields.get("description_extra4"))
                 product_category = product.get("category_id")
@@ -608,6 +611,11 @@ class BaseLinkerService:
                         f"features|{target_lang}": translated_features
                     }
                 }
+
+                if product_weight and not product_price_euro:
+                    update_payload["prices"] = {
+                        "4848": calculate_price_euro(product_price_pln, int(product_weight))
+                    }
 
                 logger.info(f"Updating product {product_id} with {target_lang} features: {translated_features}")
                 result = self._post("addInventoryProduct", update_payload)
