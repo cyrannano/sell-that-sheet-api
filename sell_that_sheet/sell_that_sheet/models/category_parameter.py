@@ -2,7 +2,7 @@ from django.db import models
 
 # Model for Custom Category Parameters with multilingual support
 class CategoryParameter(models.Model):
-    category_id = models.CharField(max_length=255, verbose_name="ID kategorii")
+    category_id = models.CharField(max_length=255, verbose_name="ID kategorii", null=True)
     name_pl = models.CharField(max_length=255, verbose_name="Nazwa (PL)")
     name_de = models.CharField(max_length=255, verbose_name="Nazwa (DE)")
     parameter_type = models.CharField(
