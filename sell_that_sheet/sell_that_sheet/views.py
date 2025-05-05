@@ -973,7 +973,7 @@ class CategoryParameterViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         category = self.request.query_params.get('category_id')
         if category:
-            queryset = queryset.filter(category_id=category)
+            queryset = queryset.filter(Q(category_id=category) | Q(category_id=None))
         return queryset
 
 class TranslateBaselinkerProductsView(APIView):
