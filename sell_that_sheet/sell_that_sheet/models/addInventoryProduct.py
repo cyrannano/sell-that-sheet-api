@@ -231,6 +231,7 @@ class AddInventoryProduct(BaseModel):
         product_name_de = auction.translated_params.get("de", {}).get("name", "") if auction.translated_params else ""
         description = auction.description if auction.description else ""
         description_de = auction.translated_params.get("de", {}).get("description", "") if auction.translated_params else ""
+        custom_translated_params= auction.custom_translated_params.get("de", {}).get("custom", {}) if auction.translated_params else {}
 
         if not description_de or not product_name_de:
             try:
@@ -263,7 +264,7 @@ class AddInventoryProduct(BaseModel):
         photos = {i: photo for i, photo in enumerate(photos)}
         # Add parameters (features) from AuctionParameter
         parameters = AuctionParameter.objects.filter(auction=auction)
-        features = {param.parameter.name: param.value_name for param in parameters}
+        features = {param.parameter.name: param.value_name for param in parameters if "custom" not in param.parameter.allegro_id}
 
         features[get_category_tags_field_name(auction.category)] = divideString(remove_duplicates(auction.tags).upper())
 
@@ -277,6 +278,12 @@ class AddInventoryProduct(BaseModel):
             language="de",
             auction_parameters=parameters
         )
+
+        # Add custom translated parameters
+        for key, value in custom_translated_params.items():
+            if isinstance(value, list):
+                value = ', '.join(value)
+            translated_features[key] = value
 
         # Add category‑specific fields before translation
         features[get_category_part_number_field_name(auction.category)] = auction.serial_numbers
