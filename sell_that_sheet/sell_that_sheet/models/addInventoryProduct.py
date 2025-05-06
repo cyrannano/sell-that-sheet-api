@@ -231,7 +231,7 @@ class AddInventoryProduct(BaseModel):
         product_name_de = auction.translated_params.get("de", {}).get("name", "") if auction.translated_params else ""
         description = auction.description if auction.description else ""
         description_de = auction.translated_params.get("de", {}).get("description", "") if auction.translated_params else ""
-        custom_translated_params= auction.custom_translated_params.get("de", {}).get("custom", {}) if auction.translated_params else {}
+        custom_translated_params= auction.translated_params.get("de", {}).get("custom", {}) if auction.translated_params else {}
 
         if not description_de or not product_name_de:
             try:
