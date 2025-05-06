@@ -264,13 +264,14 @@ class AddInventoryProduct(BaseModel):
         photos = {i: photo for i, photo in enumerate(photos)}
         # Add parameters (features) from AuctionParameter
         parameters = AuctionParameter.objects.filter(auction=auction)
-        features = {param.parameter.name: param.value_name for param in parameters}
+        features = {param.parameter.name: param.value_name for param in parameters if "custom" not in param.parameter.allegro_id}
+        custom_features = {param.parameter.name: param.value_name for param in parameters if "custom" in param.parameter.allegro_id}
 
         features[get_category_tags_field_name(auction.category)] = divideString(remove_duplicates(auction.tags).upper())
 
         # Translate features with the shared service
         translated_features = translate_features_dict(
-            features={k: v for k, v in features.items() if not k.startswith("custom_")},
+            features,
             category_id=auction.category,
             serial_numbers=auction.serial_numbers,
             name=auction.name,
@@ -278,6 +279,9 @@ class AddInventoryProduct(BaseModel):
             language="de",
             auction_parameters=parameters.exclude(parameter__allegro_id__contains="custom"),
         )
+
+        # Add custom features to features
+        features.update(custom_features)
 
         # Add custom translated parameters
         for key, value in custom_translated_params.items():
