@@ -270,7 +270,7 @@ class AddInventoryProduct(BaseModel):
 
         # Translate features with the shared service
         translated_features = translate_features_dict(
-            list(filter(lambda x: "custom" not in x.parameter.allegro_id, features)),
+            features={k: v for k, v in features.items() if not k.startswith("custom_")},
             category_id=auction.category,
             serial_numbers=auction.serial_numbers,
             name=auction.name,
