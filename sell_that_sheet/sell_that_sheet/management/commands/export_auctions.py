@@ -12,7 +12,6 @@ class Command(BaseCommand):
             Prefetch('auctionparameter_set', queryset=AuctionParameter.objects.select_related('parameter'))
         ).all()
 
-        # Collect all unique parameter names
         param_names = set()
         for auction in auctions:
             for ap in auction.auctionparameter_set.all():
@@ -20,7 +19,6 @@ class Command(BaseCommand):
 
         param_names = sorted(param_names)
 
-        # Prepare headers
         static_fields = [
             "id", "name", "price_pln", "price_euro", "tags", "serial_numbers",
             "photoset_id", "shipment_price", "description", "category",
@@ -28,12 +26,12 @@ class Command(BaseCommand):
         ]
         headers = static_fields + param_names
 
-        # Prepare rows
         rows = []
         for auction in auctions:
+            # Safely convert to timezone-naive
             created_at = auction.created_at
             if is_aware(created_at):
-                created_at = created_at.astimezone(None)
+                created_at = created_at.replace(tzinfo=None)
 
             row = [
                 auction.id,
@@ -57,6 +55,10 @@ class Command(BaseCommand):
             rows.append(row)
 
         df = pd.DataFrame(rows, columns=headers)
+
+        # Explicit conversion of datetime columns to timezone-naive
+        if 'created_at' in df.columns:
+            df['created_at'] = pd.to_datetime(df['created_at']).dt.tz_localize(None)
 
         output_path = 'auctions_export.xlsx'
         df.to_excel(output_path, index=False)
