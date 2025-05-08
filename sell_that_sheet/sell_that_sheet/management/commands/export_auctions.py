@@ -1,0 +1,45 @@
+import pandas as pd
+from django.core.management.base import BaseCommand
+from sell_that_sheet.sell_that_sheet.models import Auction, AuctionParameter
+from django.db.models import Prefetch
+
+
+class Command(BaseCommand):
+    help = 'Export all auctions with parameters to an XLSX file'
+
+    def handle(self, *args, **kwargs):
+        auctions = Auction.objects.prefetch_related(
+            Prefetch('auctionparameter_set', queryset=AuctionParameter.objects.select_related('parameter'))
+        ).all()
+
+        # Collect all unique parameter names
+        param_names = set()
+        for auction in auctions:
+            for ap in auction.auctionparameter_set.all():
+                param_names.add(ap.parameter.name)
+
+        param_names = sorted(param_names)
+
+        # Prepare headers
+        static_fields = [
+            "id", "name", "price_pln", "price_euro", "tags", "serial_numbers",
+            "photoset_id", "shipment_price", "description", "category",
+            "created_at", "amount", "translated_params"
+        ]
+        headers = static_fields + param_names
+
+        # Prepare rows
+        rows = []
+        for auction in auctions:
+            row = [getattr(auction, field) for field in static_fields]
+            param_map = {ap.parameter.name: ap.value_name for ap in auction.auctionparameter_set.all()}
+            for pname in param_names:
+                row.append(param_map.get(pname))
+            rows.append(row)
+
+        df = pd.DataFrame(rows, columns=headers)
+
+        output_path = 'auctions_export.xlsx'
+        df.to_excel(output_path, index=False)
+
+        self.stdout.write(self.style.SUCCESS(f'Successfully exported auctions to {output_path}'))
