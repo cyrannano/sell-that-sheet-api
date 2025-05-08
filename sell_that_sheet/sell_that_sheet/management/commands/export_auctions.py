@@ -2,7 +2,7 @@ import pandas as pd
 from django.core.management.base import BaseCommand
 from sell_that_sheet.models import Auction, AuctionParameter
 from django.db.models import Prefetch
-
+from django.utils.timezone import is_aware
 
 class Command(BaseCommand):
     help = 'Export all auctions with parameters to an XLSX file'
@@ -31,7 +31,26 @@ class Command(BaseCommand):
         # Prepare rows
         rows = []
         for auction in auctions:
-            row = [getattr(auction, field) for field in static_fields]
+            created_at = auction.created_at
+            if is_aware(created_at):
+                created_at = created_at.astimezone(None)
+
+            row = [
+                auction.id,
+                auction.name,
+                auction.price_pln,
+                auction.price_euro,
+                auction.tags,
+                auction.serial_numbers,
+                auction.photoset_id,
+                auction.shipment_price,
+                auction.description,
+                auction.category,
+                created_at,
+                auction.amount,
+                auction.translated_params,
+            ]
+
             param_map = {ap.parameter.name: ap.value_name for ap in auction.auctionparameter_set.all()}
             for pname in param_names:
                 row.append(param_map.get(pname))
