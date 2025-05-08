@@ -1,6 +1,6 @@
 import pandas as pd
 from django.core.management.base import BaseCommand
-from sell_that_sheet.sell_that_sheet.models import Auction, AuctionParameter
+from sell_that_sheet.models import Auction, AuctionParameter
 from django.db.models import Prefetch
 
 
