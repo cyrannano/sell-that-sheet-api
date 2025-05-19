@@ -983,7 +983,8 @@ class TranslateBaselinkerProductsView(APIView):
             required=['language', 'product_ids'],
             properties={
                 'language': openapi.Schema(type=openapi.TYPE_STRING, description='Target language for translation'),
-                'product_ids': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_INTEGER), description='List of product IDs to translate')
+                'product_ids': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_INTEGER), description='List of product IDs to translate'),
+                "inventory_id": openapi.Schema(type=openapi.TYPE_INTEGER, description='Target inventory id for translation')
             },
         ),
         responses={
@@ -1004,11 +1005,12 @@ class TranslateBaselinkerProductsView(APIView):
     def post(self, request):
         language = request.data.get('language')
         product_ids = request.data.get('product_ids', [])
+        inventory_id = request.data.get('inventory_id')
         if not language or not product_ids:
-            return Response({"error": "Language and product IDs are required."}, status=400)
+            return Response({"error": "Language, inventory ID and product IDs are required."}, status=400)
 
         # Call the translation service
         blservice = BaseLinkerService()
-        response = blservice.translate_product_parameters(product_ids, language)
+        response = blservice.translate_product_parameters(product_ids, language, inventory_id)
 
         return Response(response)
