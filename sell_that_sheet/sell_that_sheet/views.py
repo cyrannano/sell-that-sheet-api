@@ -1045,7 +1045,7 @@ class BaselinkerInventoriesView(APIView):
         }
     )
     def get(self, request):
-        token = getattr(settings, 'BASELINKER_API_TOKEN', None)
+        token = settings.BASELINKER_API_KEY
         if not token:
             return Response(
                 {'error': 'Baselinker API token not configured.'},
