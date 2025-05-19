@@ -1017,9 +1017,8 @@ class TranslateBaselinkerProductsView(APIView):
 
 class BaselinkerInventoriesView(APIView):
     """
-    GET baselinker/inventories/
-    Fetches the list of inventories from Baselinker and returns a simplified list
-    of { id, name, description }.
+    GET /baselinker/inventories/
+    Fetches the list of inventories from BaseLinker and returns only id, name, description.
     """
     permission_classes = [IsAuthenticated]
 
@@ -1040,36 +1039,53 @@ class BaselinkerInventoriesView(APIView):
                     )
                 )
             ),
+            400: 'Bad Request – invalid parameters',
             502: 'Bad Gateway – error communicating with Baselinker',
             500: 'Server configuration error',
         }
     )
     def get(self, request):
-        token = settings.BASELINKER_API_KEY
+        token = getattr(settings, 'BASELINKER_API_TOKEN', None)
         if not token:
             return Response(
                 {'error': 'Baselinker API token not configured.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        url = 'https://api.baselinker.com/index.php'
+        url = 'https://api.baselinker.com/connector.php'
+        headers = {
+            'X-BLToken': token,
+        }
         payload = {
-            'token': token,
             'method': 'getInventories',
+            'parameters': json.dumps({}),  # must be a JSON-encoded string
         }
 
         try:
-            resp = requests.post(url, data=payload, timeout=10)
+            resp = requests.post(url, headers=headers, data=payload, timeout=10)
             resp.raise_for_status()
-            bl_data = resp.json()
         except requests.RequestException as e:
             return Response(
                 {'error': 'Error communicating with Baselinker API', 'details': str(e)},
                 status=status.HTTP_502_BAD_GATEWAY
             )
+
+        try:
+            bl_data = resp.json()
         except ValueError:
             return Response(
                 {'error': 'Invalid JSON from Baselinker', 'content': resp.text},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+
+        # BaseLinker itself can return { status: "ERROR", error_message: "...", error_code: ... }
+        if bl_data.get('status') == 'ERROR':
+            return Response(
+                {
+                    'error': 'Baselinker returned an error',
+                    'message': bl_data.get('error_message'),
+                    'code': bl_data.get('error_code'),
+                },
                 status=status.HTTP_502_BAD_GATEWAY
             )
 
@@ -1077,8 +1093,8 @@ class BaselinkerInventoriesView(APIView):
         simplified = [
             {
                 'id': inv.get('inventory_id'),
-                'name': inv.get('inventory_name'),
-                'description': inv.get('inventory_description', ''),
+                'name': inv.get('name'),
+                'description': inv.get('description', ''),
             }
             for inv in inventories
         ]
