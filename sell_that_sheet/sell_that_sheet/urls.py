@@ -33,6 +33,7 @@ from .views import (
     DistinctParameterView, SaveTranslationsView, ListTranslationsView,
     TranslationExampleViewSet, TagViewSet, CategoryTagViewSet, CategoryParameterViewSet,
     TranslateBaselinkerProductsView,
+    BaselinkerInventoriesView,
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -125,4 +126,6 @@ urlpatterns = [
     path('tag-preview/', PrepareTagFieldPreview.as_view(), name='tag_preview'),
     path('api/translate/', TranslateView.as_view(), name='translate'),
     path('api/translate-bl-products/', TranslateBaselinkerProductsView.as_view(), name='translate_bl_products'),
+    path('baselinker/inventories/', BaselinkerInventoriesView.as_view(), name='baselinker_inventories'),
+
 ]

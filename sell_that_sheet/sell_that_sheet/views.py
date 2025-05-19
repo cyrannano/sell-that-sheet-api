@@ -1014,3 +1014,73 @@ class TranslateBaselinkerProductsView(APIView):
         response = blservice.translate_product_parameters(product_ids, language, inventory_id)
 
         return Response(response)
+
+class BaselinkerInventoriesView(APIView):
+    """
+    GET baselinker/inventories/
+    Fetches the list of inventories from Baselinker and returns a simplified list
+    of { id, name, description }.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="Fetch all Baselinker inventories",
+        responses={
+            200: openapi.Response(
+                description="A list of inventories",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                            'name': openapi.Schema(type=openapi.TYPE_STRING),
+                            'description': openapi.Schema(type=openapi.TYPE_STRING),
+                        }
+                    )
+                )
+            ),
+            502: 'Bad Gateway – error communicating with Baselinker',
+            500: 'Server configuration error',
+        }
+    )
+    def get(self, request):
+        token = settings.BASELINKER_API_KEY
+        if not token:
+            return Response(
+                {'error': 'Baselinker API token not configured.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        url = 'https://api.baselinker.com/index.php'
+        payload = {
+            'token': token,
+            'method': 'getInventories',
+        }
+
+        try:
+            resp = requests.post(url, data=payload, timeout=10)
+            resp.raise_for_status()
+            bl_data = resp.json()
+        except requests.RequestException as e:
+            return Response(
+                {'error': 'Error communicating with Baselinker API', 'details': str(e)},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+        except ValueError:
+            return Response(
+                {'error': 'Invalid JSON from Baselinker', 'content': resp.text},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+
+        inventories = bl_data.get('inventories', [])
+        simplified = [
+            {
+                'id': inv.get('inventory_id'),
+                'name': inv.get('inventory_name'),
+                'description': inv.get('inventory_description', ''),
+            }
+            for inv in inventories
+        ]
+
+        return Response(simplified, status=status.HTTP_200_OK)
