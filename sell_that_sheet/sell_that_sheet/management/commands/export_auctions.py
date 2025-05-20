@@ -20,7 +20,7 @@ class Command(BaseCommand):
         param_names = sorted(param_names)
 
         static_fields = [
-            "id", "name", "price_pln", "price_euro", "tags", "serial_numbers",
+            "id", "name", "thumbnail name", "price_pln", "price_euro", "tags", "serial_numbers",
             "photoset_id", "shipment_price", "description", "category",
             "created_at", "amount", "translated_params"
         ]
@@ -33,9 +33,14 @@ class Command(BaseCommand):
             if is_aware(created_at):
                 created_at = created_at.replace(tzinfo=None)
 
+
+
+            thumbnail_img_name  = auction.photoset.thumbnail.name.split('.')[0]
+
             row = [
                 auction.id,
                 auction.name,
+                thumbnail_img_name,
                 auction.price_pln,
                 auction.price_euro,
                 auction.tags,
