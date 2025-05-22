@@ -1,6 +1,7 @@
 import pandas as pd
 from django.core.management.base import BaseCommand
 from sell_that_sheet.models import Auction, AuctionParameter
+from sell_that_sheet.models.addInventoryProduct import divideString, remove_duplicates, prepare_tags
 from django.db.models import Prefetch
 from django.utils.timezone import is_aware
 
@@ -22,7 +23,10 @@ class Command(BaseCommand):
         static_fields = [
             "id", "name", "thumbnail name", "price_pln", "price_euro", "tags", "serial_numbers",
             "photoset_id", "shipment_price", "description", "category",
-            "created_at", "amount", "translated_params"
+            "created_at", "amount", "translated_params",
+            "Numer katalogowy części",      # get_category_part_number_field_name
+            "Numer katalogowy oryginału",   # get_category_tags_field_name
+            "Numery katalogowe zamienników" # get_category_auto_tags_field_name
         ]
         headers = static_fields + param_names
 
@@ -52,6 +56,11 @@ class Command(BaseCommand):
                 created_at,
                 auction.amount,
                 auction.translated_params,
+                auction.serial_numbers,
+                divideString(remove_duplicates(auction.tags).upper()),
+                prepare_tags(
+                    auction.category, auction.name, auction.tags
+                )
             ]
 
             param_map = {ap.parameter.name: ap.value_name for ap in auction.auctionparameter_set.all()}
