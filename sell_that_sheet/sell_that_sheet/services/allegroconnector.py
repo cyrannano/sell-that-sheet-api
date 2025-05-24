@@ -6,6 +6,7 @@ import json
 from ..models import AllegroAuthToken
 from django.utils import timezone
 from datetime import timedelta
+from openpyxl import Workbook
 
 
 CLIENT_ID = settings.ALLEGRO_CLIENT_ID
@@ -18,6 +19,8 @@ STATE = settings.ALLEGRO_STATE
 
 
 class AllegroConnector:
+    BASE_URL = "https://api.allegro.pl"
+
     def __init__(self):
         self.oauth = OAuth2Session(client_id=CLIENT_ID, redirect_uri=REDIRECT_URI, scope=SCOPES, state=STATE)
 
@@ -82,3 +85,77 @@ class AllegroConnector:
                    }
         response = requests.get(url, headers=headers, params=params)
         return response.json()
+
+    def fetch_all_offers(self, limit: int = 100) -> list:
+        """
+        Retrieve all seller offers by paginating through the /sale/offers endpoint.
+        """
+        offers = []
+        offset = 0
+        while True:
+            params = {"limit": limit, "offset": offset}
+            response = self.make_authenticated_get_request(
+                None,
+                f"{self.BASE_URL}/sale/offers",
+                params=params
+            )
+            batch = response.get("offers", [])
+            if not batch:
+                break
+            offers.extend(batch)
+            offset += limit
+        return offers
+
+    def fetch_offer_details(self, offer_id: str) -> dict:
+        """
+        Retrieve detailed data for a single offer, including its product parameters.
+        """
+        return self.make_authenticated_get_request(
+            None,
+            f"{self.BASE_URL}/sale/product-offers/{offer_id}"
+        )
+
+    def download_catalogue(self) -> list:
+        """
+        Download the full catalogue of offers with human-readable parameter names and values.
+        """
+        all_offers = self.fetch_all_offers()
+        detailed_offers = []
+        for offer in all_offers:
+            offer_id = offer["id"]
+            full = self.fetch_offer_details(offer_id)
+            # Extract and map parameters by name → first value’s 'value'
+            params = {}
+            for p in full.get("product", {}).get("parameters", []):
+                name = p.get("name")
+                values = p.get("values", [])
+                # Use the first available value; adjust if multiple
+                val_name = values[0].get("value") if values else None
+                params[name] = val_name
+            full["parameters_dict"] = params
+            detailed_offers.append(full)
+        return detailed_offers
+
+    def export_catalogue_to_xlsx(catalogue: list, filename: str = "catalogue.xlsx"):
+        """
+        Export the catalogue (list of offers with parameters_dict) to an XLSX file.
+        """
+        wb = Workbook()
+        ws = wb.active
+
+        # Determine all unique parameter names for headers
+        param_keys = set()
+        for item in catalogue:
+            param_keys.update(item["parameters_dict"].keys())
+        headers = ["offerId", "offerName"] + sorted(param_keys)
+        ws.append(headers)
+
+        for item in catalogue:
+            offer_id = item.get("id")
+            name = item.get("name")
+            row = [offer_id, name]
+            params = item["parameters_dict"]
+            row.extend(params.get(k, "") for k in sorted(param_keys))
+            ws.append(row)
+
+        wb.save(filename)
