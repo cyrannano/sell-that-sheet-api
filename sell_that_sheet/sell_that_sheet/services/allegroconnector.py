@@ -136,26 +136,26 @@ class AllegroConnector:
             detailed_offers.append(full)
         return detailed_offers
 
-    def export_catalogue_to_xlsx(catalogue: list, filename: str = "catalogue.xlsx"):
-        """
-        Export the catalogue (list of offers with parameters_dict) to an XLSX file.
-        """
-        wb = Workbook()
-        ws = wb.active
+def export_catalogue_to_xlsx(catalogue: list, filename: str = "catalogue.xlsx"):
+    """
+    Export the catalogue (list of offers with parameters_dict) to an XLSX file.
+    """
+    wb = Workbook()
+    ws = wb.active
 
-        # Determine all unique parameter names for headers
-        param_keys = set()
-        for item in catalogue:
-            param_keys.update(item["parameters_dict"].keys())
-        headers = ["offerId", "offerName"] + sorted(param_keys)
-        ws.append(headers)
+    # Determine all unique parameter names for headers
+    param_keys = set()
+    for item in catalogue:
+        param_keys.update(item["parameters_dict"].keys())
+    headers = ["offerId", "offerName"] + sorted(param_keys)
+    ws.append(headers)
 
-        for item in catalogue:
-            offer_id = item.get("id")
-            name = item.get("name")
-            row = [offer_id, name]
-            params = item["parameters_dict"]
-            row.extend(params.get(k, "") for k in sorted(param_keys))
-            ws.append(row)
+    for item in catalogue:
+        offer_id = item.get("id")
+        name = item.get("name")
+        row = [offer_id, name]
+        params = item["parameters_dict"]
+        row.extend(params.get(k, "") for k in sorted(param_keys))
+        ws.append(row)
 
-        wb.save(filename)
+    wb.save(filename)
