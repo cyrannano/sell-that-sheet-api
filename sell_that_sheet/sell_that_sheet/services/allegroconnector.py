@@ -122,12 +122,12 @@ class AllegroConnector:
         params = {}
         # Top-level parameters
         for p in full_offer.get('parameters', []):
-            params[p['name']] = p['values'][0] if p.get('values') else None
+            params[p['name']] = ' | '.join(p['values']) if p.get('values') else None
         # productSet parameters
         for ps in full_offer.get('productSet', []):
             prod = ps.get('product', {})
             for p in prod.get('parameters', []):
-                params[p['name']] = p['values'][0] if p.get('values') else None
+                params[p['name']] = ' | '.join(p['values']) if p.get('values') else None
         return params
 
     def parse_catalogue(self, detailed_offers: list) -> list:
