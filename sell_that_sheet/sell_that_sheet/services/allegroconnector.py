@@ -7,7 +7,7 @@ from ..models import AllegroAuthToken
 from django.utils import timezone
 from datetime import timedelta
 from openpyxl import Workbook
-
+from tqdm import tqdm
 
 CLIENT_ID = settings.ALLEGRO_CLIENT_ID
 CLIENT_SECRET = settings.ALLEGRO_CLIENT_SECRET
@@ -112,7 +112,7 @@ class AllegroConnector:
     def download_catalogue(self) -> list:
         all_offers = self.fetch_all_offers()
         detailed_offers = []
-        for o in all_offers:
+        for o in tqdm(all_offers):
             full = self.fetch_offer_details(o['id'])
             detailed_offers.append(full)
         return detailed_offers
