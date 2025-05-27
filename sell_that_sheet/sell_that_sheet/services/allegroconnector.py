@@ -87,19 +87,16 @@ class AllegroConnector:
         return response.json()
 
     def fetch_all_offers(self, limit: int = 100) -> list:
-        """
-        Retrieve all seller offers by paginating through the /sale/offers endpoint.
-        """
         offers = []
         offset = 0
         while True:
-            params = {"limit": limit, "offset": offset}
-            response = self.make_authenticated_get_request(
+            params = {"limit": limit, "offset": offset, "publication.status": ["ACTIVE"]}
+            resp = self.make_authenticated_get_request(
                 None,
                 f"{self.BASE_URL}/sale/offers",
                 params=params
             )
-            batch = response.get("offers", [])
+            batch = resp.get("offers", [])
             if not batch:
                 break
             offers.extend(batch)
@@ -107,55 +104,64 @@ class AllegroConnector:
         return offers
 
     def fetch_offer_details(self, offer_id: str) -> dict:
-        """
-        Retrieve detailed data for a single offer, including its product parameters.
-        """
         return self.make_authenticated_get_request(
             None,
             f"{self.BASE_URL}/sale/product-offers/{offer_id}"
         )
 
     def download_catalogue(self) -> list:
-        """
-        Download the full catalogue of offers with human-readable parameter names and values.
-        """
         all_offers = self.fetch_all_offers()
         detailed_offers = []
-        for offer in all_offers:
-            offer_id = offer["id"]
-            full = self.fetch_offer_details(offer_id)
-            # Extract and map parameters by name → first value’s 'value'
-            params = {}
-            for p in full.get("product", {}).get("parameters", []):
-                name = p.get("name")
-                values = p.get("values", [])
-                # Use the first available value; adjust if multiple
-                val_name = values[0].get("value") if values else None
-                params[name] = val_name
-            full["parameters_dict"] = params
+        for o in all_offers:
+            full = self.fetch_offer_details(o['id'])
             detailed_offers.append(full)
         return detailed_offers
 
-def export_catalogue_to_xlsx(catalogue: list, filename: str = "catalogue.xlsx"):
-    """
-    Export the catalogue (list of offers with parameters_dict) to an XLSX file.
-    """
-    wb = Workbook()
-    ws = wb.active
+    @staticmethod
+    def extract_parameters(full_offer: dict) -> dict:
+        params = {}
+        # Top-level parameters
+        for p in full_offer.get('parameters', []):
+            params[p['name']] = p['values'][0] if p.get('values') else None
+        # productSet parameters
+        for ps in full_offer.get('productSet', []):
+            prod = ps.get('product', {})
+            for p in prod.get('parameters', []):
+                params[p['name']] = p['values'][0] if p.get('values') else None
+        return params
 
-    # Determine all unique parameter names for headers
-    param_keys = set()
-    for item in catalogue:
-        param_keys.update(item["parameters_dict"].keys())
-    headers = ["offerId", "offerName"] + sorted(param_keys)
-    ws.append(headers)
+    def parse_catalogue(self, detailed_offers: list) -> list:
+        parsed = []
+        for o in detailed_offers:
+            row = {
+                'offerId': o.get('id'),
+                'offerName': o.get('name'),
+            }
+            params = self.extract_parameters(o)
+            row.update(params)
+            parsed.append(row)
+        return parsed
 
-    for item in catalogue:
-        offer_id = item.get("id")
-        name = item.get("name")
-        row = [offer_id, name]
-        params = item["parameters_dict"]
-        row.extend(params.get(k, "") for k in sorted(param_keys))
-        ws.append(row)
+    @staticmethod
+    def export_to_xlsx(rows: list, filename: str = 'catalogue.xlsx'):
+        wb = Workbook()
+        ws = wb.active
+        if not rows:
+            wb.save(filename)
+            return
+        headers = list(rows[0].keys())
+        ws.append(headers)
+        for r in rows:
+            ws.append([r.get(h, '') for h in headers])
+        wb.save(filename)
 
-    wb.save(filename)
+    @staticmethod
+    def export_to_csv(rows: list, filename: str = 'catalogue.csv'):
+        if not rows:
+            return
+        fieldnames = list(rows[0].keys())
+        with open(filename, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for r in rows:
+                writer.writerow(r)

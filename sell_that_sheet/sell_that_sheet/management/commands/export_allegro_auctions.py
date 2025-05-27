@@ -9,5 +9,5 @@ class Command(BaseCommand):
         connector.get_allegro_access_token()
         catalogue = connector.download_catalogue()
 
-        # Export to Excel
-        export_catalogue_to_xlsx(catalogue, "my_allegro_catalogue.xlsx")
+        parsed = connector.parse_catalogue(catalogue)
+        connector.export_to_xlsx(parsed, 'full_catalogue.xlsx')
