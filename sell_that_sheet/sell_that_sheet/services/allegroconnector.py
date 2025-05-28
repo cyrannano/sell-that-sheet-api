@@ -130,12 +130,23 @@ class AllegroConnector:
                 params[p['name']] = ' | '.join(p['values']) if p.get('values') else None
         return params
 
+    @staticmethod
+    def extract_description(full_offer: dict) -> str:
+        # Concatenate all description section contents into plain text
+        desc = []
+        for section in full_offer.get('description', {}).get('sections', []):
+            for item in section.get('items', []):
+                content = item.get('content') or item.get('url')
+                desc.append(content)
+        return '\n'.join(desc)
+
     def parse_catalogue(self, detailed_offers: list) -> list:
         parsed = []
         for o in detailed_offers:
             row = {
                 'offerId': o.get('id'),
                 'offerName': o.get('name'),
+                'description': self.extract_description(o),
             }
             params = self.extract_parameters(o)
             row.update(params)
