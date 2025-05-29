@@ -8,6 +8,7 @@ from django.utils import timezone
 from datetime import timedelta
 from openpyxl import Workbook
 from tqdm import tqdm
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 CLIENT_ID = settings.ALLEGRO_CLIENT_ID
 CLIENT_SECRET = settings.ALLEGRO_CLIENT_SECRET
@@ -76,15 +77,20 @@ class AllegroConnector:
         # If there's no parent, return the current category name
         return category_name
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1, max=10),
+        retry=retry_if_exception_type((requests.exceptions.RequestException,))
+    )
     def make_authenticated_get_request(self, request, url, params=None):
-        # Assuming the token is stored in the session for this example
         access_token = self.get_allegro_access_token()
         headers = {
             'Authorization': f'Bearer {access_token}',
             'Accept': 'application/vnd.allegro.public.v1+json'
-                   }
-        response = requests.get(url, headers=headers, params=params)
-        return response.json()
+        }
+        r = requests.get(url, headers=headers, params=params, timeout=10)
+        r.raise_for_status()
+        return r.json()
 
     def fetch_all_offers(self, limit: int = 100) -> list:
         offers = []
