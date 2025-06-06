@@ -9,6 +9,7 @@ from datetime import timedelta
 from openpyxl import Workbook
 from tqdm import tqdm
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import csv
 
 CLIENT_ID = settings.ALLEGRO_CLIENT_ID
 CLIENT_SECRET = settings.ALLEGRO_CLIENT_SECRET
