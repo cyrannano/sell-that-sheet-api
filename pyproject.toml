@@ -27,6 +27,7 @@ pydantic = "^2.9.2"
 openai = "^1.58.1"
 django-extensions = "^3.2.3"
 tenacity = "^9.1.2"
+celery = "^5.3"
 
 
 [build-system]

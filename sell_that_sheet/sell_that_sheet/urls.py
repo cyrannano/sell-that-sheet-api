@@ -25,15 +25,32 @@ from .views import (
     PrepareTagFieldPreview,
     PerformOcrView,
     ListGroupUsersView,
-    CompleteFilesView, CompleteAuctionSetFilesView, DescriptionTemplateViewSet,
-    GetUsersDescriptionTemplates, KeywordTranslationViewSet, GetUsersKeywordTranslation, KeywordTranslationSearchView,
+    CompleteFilesView,
+    CompleteAuctionSetFilesView,
+    DescriptionTemplateViewSet,
+    GetUsersDescriptionTemplates,
+    KeywordTranslationViewSet,
+    GetUsersKeywordTranslation,
+    KeywordTranslationSearchView,
     TranslateView,
     ImageRotateView,
     DistinctAuctionParameterView,
-    DistinctParameterView, SaveTranslationsView, ListTranslationsView,
-    TranslationExampleViewSet, TagViewSet, CategoryTagViewSet, CategoryParameterViewSet,
+    DistinctParameterView,
+    SaveTranslationsView,
+    ListTranslationsView,
+    TranslationExampleViewSet,
+    TagViewSet,
+    CategoryTagViewSet,
+    CategoryParameterViewSet,
     TranslateBaselinkerProductsView,
     BaselinkerInventoriesView,
+)
+from .extra_views import (
+    ConvertRowsToColumnsView,
+    ExportAllegroStartView,
+    DownloadAllegroExportView,
+    ExportAuctionsView,
+    DownloadAuctionsExportView,
 )
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -49,10 +66,12 @@ router.register(r"auctionparameters", AuctionParameterViewSet)
 router.register(r"parameters", ParameterViewSet)
 router.register(r"descriptiontemplate", DescriptionTemplateViewSet)
 router.register(r"keywordtranslation", KeywordTranslationViewSet)
-router.register(r'translationexample', TranslationExampleViewSet)
-router.register(r'tags', TagViewSet, basename='tag')
-router.register(r'category-tags', CategoryTagViewSet, basename='categorytag')
-router.register(r"category-parameters", CategoryParameterViewSet, basename="category-parameter")
+router.register(r"translationexample", TranslationExampleViewSet)
+router.register(r"tags", TagViewSet, basename="tag")
+router.register(r"category-tags", CategoryTagViewSet, basename="categorytag")
+router.register(
+    r"category-parameters", CategoryParameterViewSet, basename="category-parameter"
+)
 
 # router.register(r'keyword-translation', KeywordTranslationViewSet, basename='keyword-translation')
 
@@ -82,23 +101,59 @@ urlpatterns = [
     path("api/user/", UserView.as_view(), name="user data"),
     path("api/user/<int:user_id>", UserView.as_view(), name="user data"),
     path("api/browse/", DirectoryBrowseView.as_view(), name="directory-browse"),
-    path('api/complete-files/<int:auction_id>', CompleteFilesView.as_view(), name='complete_files'),
-    path('api/complete-auctionset-files/<int:auction_set_id>', CompleteAuctionSetFilesView.as_view(), name='complete_auctionset_files'),
+    path(
+        "api/complete-files/<int:auction_id>",
+        CompleteFilesView.as_view(),
+        name="complete_files",
+    ),
+    path(
+        "api/complete-auctionset-files/<int:auction_set_id>",
+        CompleteAuctionSetFilesView.as_view(),
+        name="complete_auctionset_files",
+    ),
     path(
         "api/browse/<path:path>", DirectoryBrowseView.as_view(), name="directory-browse"
     ),
     path("api/translations/", ListTranslationsView.as_view(), name="list_translations"),
-    path("api/translations/save/", SaveTranslationsView.as_view(), name="save_translations"),
-    path('keyword-translation/search/', KeywordTranslationSearchView.as_view(), name='keyword-translation-search'),
+    path(
+        "api/translations/save/",
+        SaveTranslationsView.as_view(),
+        name="save_translations",
+    ),
+    path(
+        "keyword-translation/search/",
+        KeywordTranslationSearchView.as_view(),
+        name="keyword-translation-search",
+    ),
     path("api/login/", LoginView.as_view(), name="login"),
     path("api/logout/", LogoutView.as_view(), name="logout"),
-    path('api/perform-ocr/', PerformOcrView.as_view(), name='perform_ocr'),
-    path('api/group-users/<str:group_name>/', ListGroupUsersView.as_view(), name='group_users'),
-    path('api/description-templates/user/<int:user_id>/', GetUsersDescriptionTemplates.as_view(), name='description_templates'),
-    path('api/keyword-translation/user/<int:user_id>/', GetUsersKeywordTranslation.as_view(), name='keyword_translation'),
-    path('api/image-rotate/', ImageRotateView.as_view(), name='image_rotate'),
-    path('distinct-auction-parameters/', DistinctAuctionParameterView.as_view(), name='distinct_auction_parameters'),
-    path('distinct-parameters/', DistinctParameterView.as_view(), name='distinct_parameters'),
+    path("api/perform-ocr/", PerformOcrView.as_view(), name="perform_ocr"),
+    path(
+        "api/group-users/<str:group_name>/",
+        ListGroupUsersView.as_view(),
+        name="group_users",
+    ),
+    path(
+        "api/description-templates/user/<int:user_id>/",
+        GetUsersDescriptionTemplates.as_view(),
+        name="description_templates",
+    ),
+    path(
+        "api/keyword-translation/user/<int:user_id>/",
+        GetUsersKeywordTranslation.as_view(),
+        name="keyword_translation",
+    ),
+    path("api/image-rotate/", ImageRotateView.as_view(), name="image_rotate"),
+    path(
+        "distinct-auction-parameters/",
+        DistinctAuctionParameterView.as_view(),
+        name="distinct_auction_parameters",
+    ),
+    path(
+        "distinct-parameters/",
+        DistinctParameterView.as_view(),
+        name="distinct_parameters",
+    ),
     path("allegro/login/", AllegroLoginView.as_view(), name="allegro_login"),
     path("allegro/callback/", AllegroCallbackView.as_view(), name="allegro_callback"),
     path(
@@ -121,11 +176,48 @@ urlpatterns = [
         GetModelStructure.as_view(),
         name="get_model_structure",
     ),
-    path('download/auctionset/<int:auctionset_id>/', download_auctionset_xlsx, name='download_auctionset_xlsx'),
-    path('auctionsets/baselinker/upload/<int:auctionset_id>', UploadAuctionSetToBaselinkerView.as_view(), name='upload_auctionset_to_baselinker'),
-    path('tag-preview/', PrepareTagFieldPreview.as_view(), name='tag_preview'),
-    path('api/translate/', TranslateView.as_view(), name='translate'),
-    path('api/translate-bl-products/', TranslateBaselinkerProductsView.as_view(), name='translate_bl_products'),
-    path('baselinker/inventories/', BaselinkerInventoriesView.as_view(), name='baselinker_inventories'),
-
+    path(
+        "download/auctionset/<int:auctionset_id>/",
+        download_auctionset_xlsx,
+        name="download_auctionset_xlsx",
+    ),
+    path(
+        "auctionsets/baselinker/upload/<int:auctionset_id>",
+        UploadAuctionSetToBaselinkerView.as_view(),
+        name="upload_auctionset_to_baselinker",
+    ),
+    path("tag-preview/", PrepareTagFieldPreview.as_view(), name="tag_preview"),
+    path("api/translate/", TranslateView.as_view(), name="translate"),
+    path(
+        "api/translate-bl-products/",
+        TranslateBaselinkerProductsView.as_view(),
+        name="translate_bl_products",
+    ),
+    path(
+        "baselinker/inventories/",
+        BaselinkerInventoriesView.as_view(),
+        name="baselinker_inventories",
+    ),
+    # Utility endpoints
+    path(
+        "utils/rows-to-columns/",
+        ConvertRowsToColumnsView.as_view(),
+        name="rows_to_columns",
+    ),
+    path(
+        "allegro/export/start/",
+        ExportAllegroStartView.as_view(),
+        name="export_allegro_start",
+    ),
+    path(
+        "allegro/export/download/",
+        DownloadAllegroExportView.as_view(),
+        name="export_allegro_download",
+    ),
+    path("auctions/export/", ExportAuctionsView.as_view(), name="export_auctions"),
+    path(
+        "auctions/export/download/",
+        DownloadAuctionsExportView.as_view(),
+        name="download_auctions_export",
+    ),
 ]
