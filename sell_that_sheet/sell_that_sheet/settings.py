@@ -130,7 +130,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'sell_that_sheet.CustomUser'
+AUTH_USER_MODEL = "sell_that_sheet.CustomUser"
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
@@ -163,11 +163,11 @@ REST_FRAMEWORK = {
     ],
 }
 
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, "static"),
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 MEDIA_ROOT = os.environ["STS_MEDIA_ROOT"]
 APP_FILESYSTEM_ROOT = os.environ["STS_APP_FILESYSTEM_ROOT"]
@@ -186,10 +186,10 @@ OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 OPENAI_TRANSLATION_ASSISTANT_ID = os.environ["OPENAI_TRANSLATION_ASSISTANT_ID"]
 PHOTOSET_MAX_PHOTOS = int(os.environ["PHOTOSET_MAX_PHOTOS"])
 
-SHIPMENT_WEIGHT_MAPPING = {
-    10: 15,
-    30: 15,
-    40: 40,
-    150: 150,
-    200: 200
-}
+SHIPMENT_WEIGHT_MAPPING = {10: 15, 30: 15, 40: 40, 150: 150, 200: 200}
+
+# Celery configuration
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get(
+    "CELERY_RESULT_BACKEND", "redis://localhost:6379/0"
+)
