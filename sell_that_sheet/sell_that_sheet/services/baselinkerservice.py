@@ -592,7 +592,8 @@ class BaseLinkerService:
                     target_lang,
                 )
 
-                if not translated_name or not translated_description:
+                if not translated_name or (
+                        not translated_description and product_description is not None and product_description.strip() != ''):
                     logger.warning(f"Product {product_id} has no name or description to translate.")
                     continue
 
