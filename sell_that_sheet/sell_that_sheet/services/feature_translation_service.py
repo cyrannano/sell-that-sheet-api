@@ -150,17 +150,32 @@ def translate_features_dict(
     """
     translated: Dict[str, str] = {}
     to_translate: Dict[str, str] = {}
-    from ..models.addInventoryProduct import get_category_tags_field_name, prepare_tags
+    from ..models.addInventoryProduct import (
+        get_category_tags_field_name,
+        get_category_part_number_field_name,
+        get_category_auto_tags_field_name,
+        prepare_tags,
+    )
     from .baselinkerservice import BASELINKER_TO_ALLEGRO_CATEGORY_ID
 
     # 1. Hardcoded translations
     translated.update(add_custom_translations(features))
 
+    untranslated_fields = set()
+    if category_id is not None:
+        untranslated_fields.update(
+            {
+                get_category_part_number_field_name(category_id),
+                get_category_tags_field_name(category_id),
+                get_category_auto_tags_field_name(category_id),
+            }
+        )
+
     # 2. DB/AI translation for remaining keys
 
     for key, value in features.items():
 
-        if key in FUNCTION_TRANSLATED_PARAMETERS or key in translated:
+        if key in FUNCTION_TRANSLATED_PARAMETERS or key in translated or key in untranslated_fields:
             continue
         # Use dict input to get_translations
 
