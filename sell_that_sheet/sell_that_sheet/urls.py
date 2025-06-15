@@ -214,9 +214,9 @@ urlpatterns = [
         DownloadAllegroExportView.as_view(),
         name="export_allegro_download",
     ),
-    path("auctions/export/", ExportAuctionsView.as_view(), name="export_auctions"),
+    path("bl-auctions/export/", ExportAuctionsView.as_view(), name="export_auctions"),
     path(
-        "auctions/export/download/",
+        "bl-auctions/export/download/",
         DownloadAuctionsExportView.as_view(),
         name="download_auctions_export",
     ),
