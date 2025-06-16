@@ -9,7 +9,11 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .services.rows_to_columns import rows_to_columns
-from .tasks import export_allegro_catalogue_task, export_auctions_task
+from .tasks import (
+    export_allegro_catalogue_task,
+    export_auctions_task,
+    register_task,
+)
 
 
 class ConvertRowsToColumnsView(APIView):
@@ -41,6 +45,7 @@ class ConvertRowsToColumnsView(APIView):
 class ExportAllegroStartView(APIView):
     def post(self, request):
         task = export_allegro_catalogue_task.delay()
+        register_task("export_allegro_catalogue_task", task.id)
         return Response({"task_id": task.id})
 
 
@@ -59,6 +64,7 @@ class DownloadAllegroExportView(APIView):
 class ExportAuctionsView(APIView):
     def get(self, request):
         task = export_auctions_task.delay()
+        register_task("export_auctions_task", task.id)
         return Response({"task_id": task.id})
 
 

@@ -1124,6 +1124,7 @@ class CeleryTaskManagerView(APIView):
                             'status': openapi.Schema(type=openapi.TYPE_STRING),
                             'result': openapi.Schema(type=openapi.TYPE_STRING),
                             'date_done': openapi.Schema(type=openapi.TYPE_STRING, format='date-time'),
+                            'last_run': openapi.Schema(type=openapi.TYPE_STRING, format='date-time'),
                         }
                     )
                 )

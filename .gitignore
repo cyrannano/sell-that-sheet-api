@@ -155,3 +155,5 @@ cython_debug/
 *.cnf
 
 docker-compose.yaml
+
+task_status.json
