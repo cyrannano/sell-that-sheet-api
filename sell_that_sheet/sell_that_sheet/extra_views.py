@@ -30,12 +30,12 @@ class ConvertRowsToColumnsView(APIView):
             for chunk in uploaded.chunks():
                 src.write(chunk)
 
-        dst = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+        dst = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
         try:
             rows_to_columns(src.name, dst.name)
             dst.seek(0)
             response = FileResponse(
-                open(dst.name, "rb"), as_attachment=True, filename="converted.xlsx"
+                open(dst.name, "rb"), as_attachment=True, filename="converted.csv"
             )
         finally:
             os.unlink(src.name)
