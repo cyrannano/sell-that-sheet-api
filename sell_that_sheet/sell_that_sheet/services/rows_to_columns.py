@@ -1,6 +1,8 @@
 import pandas as pd
 from tqdm import tqdm
+import logging
 
+logger = logging.getLogger(__name__)
 
 def rows_to_columns(input_path: str, xlsx_path: str) -> None:
     """Convert a row based data file into a column oriented XLSX file.
@@ -20,6 +22,9 @@ def rows_to_columns(input_path: str, xlsx_path: str) -> None:
 
     products = []
     product = {}
+
+    logger.info("Processing rows to convert to columns...")
+
     for line in tqdm(lines):
         if ";" not in line:
             if product:
@@ -31,11 +36,16 @@ def rows_to_columns(input_path: str, xlsx_path: str) -> None:
         if len(line) > 1:
             product[line[0]] = line[1]
 
+    logger.info("Finalizing product data...")
+
     if product:
         products.append(product)
 
+    logger.info(f"Total products processed: {len(products)}")
     df = pd.DataFrame(products)
     cols = df.columns.tolist()
     cols.sort(key=lambda x: df[x].count(), reverse=True)
     df = df[cols]
+    logger.info("Saving DataFrame to XLSX file...")
     df.to_excel(xlsx_path, index=False)
+    logger.info(f"Data saved to {xlsx_path} successfully.")
