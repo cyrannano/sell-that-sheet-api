@@ -47,5 +47,5 @@ def rows_to_columns(input_path: str, xlsx_path: str) -> None:
     cols.sort(key=lambda x: df[x].count(), reverse=True)
     df = df[cols]
     logger.info("Saving DataFrame to XLSX file...")
-    df.to_excel(xlsx_path, index=False)
+    df.to_csv(xlsx_path, index=False, encoding="utf-8-sig")
     logger.info(f"Data saved to {xlsx_path} successfully.")
