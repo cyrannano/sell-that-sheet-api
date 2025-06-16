@@ -44,6 +44,7 @@ from .views import (
     CategoryParameterViewSet,
     TranslateBaselinkerProductsView,
     BaselinkerInventoriesView,
+    CeleryTaskManagerView,
 )
 from .extra_views import (
     ConvertRowsToColumnsView,
@@ -220,4 +221,5 @@ urlpatterns = [
         DownloadAuctionsExportView.as_view(),
         name="download_auctions_export",
     ),
+    path("tasks/status/", CeleryTaskManagerView.as_view(), name="tasks_status"),
 ]

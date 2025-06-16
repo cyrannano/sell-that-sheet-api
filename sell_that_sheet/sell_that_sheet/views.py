@@ -56,6 +56,7 @@ import requests
 from .services.baselinkerservice import BaseLinkerService
 from .services.directorybrowser import put_files_from_auctionset_in_completed_directory, apply_rotation_to_image
 
+from .tasks import get_tasks_status
 
 class AuctionViewSet(viewsets.ModelViewSet):
     queryset = Auction.objects.all()
@@ -1100,3 +1101,39 @@ class BaselinkerInventoriesView(APIView):
         ]
 
         return Response(simplified, status=status.HTTP_200_OK)
+
+class CeleryTaskManagerView(APIView):
+    """
+    API endpoint to manage Celery tasks.
+    Allows listing, retrieving, and canceling tasks.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="List all Celery tasks",
+        responses={
+            200: openapi.Response(
+                description="A list of Celery tasks",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'task_id': openapi.Schema(type=openapi.TYPE_STRING),
+                            'status': openapi.Schema(type=openapi.TYPE_STRING),
+                            'result': openapi.Schema(type=openapi.TYPE_STRING),
+                            'date_done': openapi.Schema(type=openapi.TYPE_STRING, format='date-time'),
+                        }
+                    )
+                )
+            ),
+            500: 'Server error',
+        }
+    )
+    def get(self, request):
+        """
+        List all Celery tasks.
+        """
+        tasks_status = get_tasks_status()
+        return Response(tasks_status, status=status.HTTP_200_OK)
