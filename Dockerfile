@@ -15,7 +15,9 @@ RUN pip install --no-cache-dir poetry
 
 # Copy the project files
 COPY pyproject.toml poetry.lock ./
-RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi \
+    && pip install redis
 
 # Copy Django app
 COPY . .
