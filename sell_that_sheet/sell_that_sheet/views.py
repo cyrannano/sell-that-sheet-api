@@ -1102,6 +1102,50 @@ class BaselinkerInventoriesView(APIView):
 
         return Response(simplified, status=status.HTTP_200_OK)
 
+
+class CopyBaselinkerProductWithImagesView(APIView):
+    """Copy an existing BaseLinker product but use new images."""
+
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["photoset_id", "product_id"],
+            properties={
+                "photoset_id": openapi.Schema(type=openapi.TYPE_INTEGER),
+                "product_id": openapi.Schema(type=openapi.TYPE_INTEGER),
+            },
+        ),
+        responses={
+            200: "Product copied",
+            400: "Bad request",
+            404: "Product not found",
+        },
+        operation_description="Create a new product using data from an existing product and provided images.",
+    )
+    def post(self, request):
+        photoset_id = request.data.get("photoset_id")
+        product_id = request.data.get("product_id")
+
+        if not photoset_id or not product_id:
+            return Response({"error": "photoset_id and product_id are required"}, status=400)
+
+        try:
+            photoset = PhotoSet.objects.get(pk=photoset_id)
+        except PhotoSet.DoesNotExist:
+            return Response({"error": "Photoset not found"}, status=404)
+
+        service = BaseLinkerService()
+        try:
+            resp = service.copy_product_with_images(int(product_id), photoset)
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=404)
+        except Exception as exc:
+            return Response({"error": str(exc)}, status=502)
+
+        return Response(resp)
+
 class CeleryTaskManagerView(APIView):
     """
     API endpoint to manage Celery tasks.
