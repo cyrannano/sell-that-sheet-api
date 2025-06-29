@@ -7,11 +7,16 @@ from typing import Dict, List, Optional
 from django.conf import settings
 
 from .feature_translation_service import translate_name_description, translate_features_dict
-from .utils import prepare_temp_directory, remove_temp_directory
+from .utils import (
+    prepare_temp_directory,
+    remove_temp_directory,
+    parse_photos,
+    limit_photo_size,
+)
 from ..models import AddInventoryProduct, AddInventoryProductResponse
 from .allegroconnector import AllegroConnector
 
-from ..models import AuctionSet
+from ..models import AuctionSet, PhotoSet
 from ..models.addInventoryProduct import prepare_tags, get_category_tags_field_name, \
     get_category_part_number_field_name, get_category_auto_tags_field_name, calculate_price_euro, map_shipment_to_weight
 
@@ -627,6 +632,65 @@ class BaseLinkerService:
             raise
 
         return responses
+
+    def copy_product_with_images(
+        self,
+        product_id: int,
+        photoset: "PhotoSet",
+        inventory_id: int = 1430,
+    ) -> Dict:
+        """Copy an existing product with new images.
+
+        Parameters
+        ----------
+        product_id: int
+            ID of the product in BaseLinker which should be copied.
+        photoset: PhotoSet
+            Photoset instance containing images that should be used in the new product.
+        inventory_id: int, optional
+            Target inventory ID. Defaults to ``1430`` which is the main inventory
+            used across the project.
+
+        Returns
+        -------
+        Dict
+            Raw response returned by BaseLinker API.
+        """
+
+        product_data_resp = self._post(
+            "getInventoryProductsData",
+            {"inventory_id": inventory_id, "products": [product_id]},
+        )
+
+        product_data = product_data_resp.get("products", {}).get(str(product_id))
+        if not product_data:
+            raise ValueError(f"Product {product_id} not found in inventory {inventory_id}")
+
+        # Prepare images based on provided photoset
+        thumbnail = photoset.thumbnail
+        photos = [
+            os.path.join(settings.MEDIA_ROOT, photoset.directory_location, p.name)
+            for p in photoset.photos.all()
+        ]
+        photos.sort()
+        if thumbnail:
+            thumb_path = os.path.join(settings.MEDIA_ROOT, photoset.directory_location, thumbnail.name)
+            if thumb_path in photos:
+                photos.remove(thumb_path)
+            photos.insert(0, thumb_path)
+
+        photos = parse_photos(photos, settings.PHOTOSET_MAX_PHOTOS)
+        photos = limit_photo_size(photos)
+        images = {idx: path for idx, path in enumerate(photos)}
+
+        payload = {
+            key: product_data.get(key)
+            for key in AddInventoryProduct.model_fields.keys()
+            if key not in {"product_id", "images", "inventory_id"}
+        }
+        payload.update({"inventory_id": str(inventory_id), "images": images})
+
+        return self._post("addInventoryProduct", payload)
 
     def _translate_features(self, features, target_lang, category_id, serial_numbers, auto_tags, product_name):
         translated_features = translate_features_dict(features=features, language=target_lang, category_id=category_id,
