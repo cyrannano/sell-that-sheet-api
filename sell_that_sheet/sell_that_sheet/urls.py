@@ -44,6 +44,7 @@ from .views import (
     CategoryParameterViewSet,
     TranslateBaselinkerProductsView,
     BaselinkerInventoriesView,
+    CopyBaselinkerProductWithImagesView,
     CeleryTaskManagerView,
 )
 from .extra_views import (
@@ -220,6 +221,11 @@ urlpatterns = [
         "bl-auctions/export/download/",
         DownloadAuctionsExportView.as_view(),
         name="download_auctions_export",
+    ),
+    path(
+        "bl-auctions/copy-with-images/",
+        CopyBaselinkerProductWithImagesView.as_view(),
+        name="bl_copy_with_images",
     ),
     path("tasks/status/", CeleryTaskManagerView.as_view(), name="tasks_status"),
 ]
