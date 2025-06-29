@@ -587,13 +587,13 @@ class BaseLinkerService:
 
                 translated_name, translated_description = translate_name_description(
                     product_name,
-                    product_description,
+                    product_description or "",
                     product_allegro_category_id,
                     target_lang,
                 )
 
-                if not translated_name or (
-                        not translated_description and product_description is not None and product_description.strip() != ''):
+                if not translated_name:
+                    logger.warning(f"Translation name/desc ({product_name}/{product_description}) output: {translated_name}, {translated_description}")
                     logger.warning(f"Product {product_id} has no name or description to translate.")
                     continue
 
